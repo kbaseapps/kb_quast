@@ -27,6 +27,7 @@ compile:
 		--java \
 		--pysrvname $(SERVICE_CAPS).$(SERVICE_CAPS)Server \
 		--pyimplname $(SERVICE_CAPS).$(SERVICE_CAPS)Impl;
+	env KB_SDK_COMPILE_REPORT_FILE="" kb-sdk compile --html $(SPEC_FILE);
 
 build:
 	chmod +x $(SCRIPTS_DIR)/entrypoint.sh
