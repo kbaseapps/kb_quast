@@ -7,6 +7,15 @@ MAINTAINER KBase Developer
 
 # RUN apt-get update
 
+RUN cd /opt \
+    && wget https://downloads.sourceforge.net/project/quast/quast-4.4.tar.gz \
+    && tar -xzf quast-4.4.tar.gz \
+    && cd quast-4.4 \
+    && ./setup.py install_full \
+    && pip install ipython \
+    && apt-get install nano \
+    && apt-get install tree
+
 # -----------------------------------------
 
 COPY ./ /kb/module
