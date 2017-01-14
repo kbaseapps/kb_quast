@@ -39,7 +39,7 @@ class kb_quast:
 
     Module Description:
     Wrapper for the QUAST tool. Takes one or more assemblies as input and produces a QUAST report
-stored in a zip file Shock.
+stored in a zip file in Shock.
     '''
 
     ######## WARNING FOR GEVENT USERS ####### noqa
@@ -50,7 +50,7 @@ stored in a zip file Shock.
     ######################################### noqa
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/mrcreosote/kb_quast"
-    GIT_COMMIT_HASH = "77db7a55970d7e14b1e06bb02ca09dfbd58c367b"
+    GIT_COMMIT_HASH = "8ba86f1acb1814be5eb4ea4203477d3a44b81600"
 
     #BEGIN_CLASS_HEADER
 
@@ -156,9 +156,20 @@ stored in a zip file Shock.
            containing an assembly, either a KBaseGenomes.ContigSet or
            KBaseGenomeAnnotations.Assembly.)
         :returns: instance of type "QUASTOutput" (Ouput of the run_quast
-           function. shock_node - the id of the shock node where the zipped
-           QUAST output is stored.) -> structure: parameter "shock_node" of
-           String
+           function. shock_id - the id of the shock node where the zipped
+           QUAST output is stored. handle - the new handle for the shock
+           node. node_file_name - the name of the file stored in Shock. size
+           - the size of the file stored in shock.) -> structure: parameter
+           "shock_id" of String, parameter "handle" of type "Handle" (A
+           handle for a file stored in Shock. hid - the id of the handle in
+           the Handle Service that references this shock node id - the id for
+           the shock node url - the url of the shock server type - the type
+           of the handle. This should always be shock. file_name - the name
+           of the file remote_md5 - the md5 digest of the file.) ->
+           structure: parameter "hid" of String, parameter "file_name" of
+           String, parameter "id" of String, parameter "url" of String,
+           parameter "type" of String, parameter "remote_md5" of String,
+           parameter "node_file_name" of String, parameter "size" of String
         """
         # ctx is the context object
         # return variables are: output
@@ -184,14 +195,11 @@ stored in a zip file Shock.
             raise ValueError('QUAST reported an error, return code was ' + str(retcode))
         dfu = _DFUClient(self.callback_url)
         try:
-            ret = dfu.file_to_shock({'file_path': out, 'make_handle': 1, 'pack': 'zip'})
+            output = dfu.file_to_shock({'file_path': out, 'make_handle': 1, 'pack': 'zip'})
         except _DFUError as dfue:
             self.log('Logging exception loading results to shock')
             self.log(str(dfue))
             raise
-        print ret
-
-        output = None
         #END run_QUAST
 
         # At some point might do deeper type checking...

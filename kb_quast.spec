@@ -9,6 +9,23 @@ module kb_quast {
 		KBaseGenomes.ContigSet or KBaseGenomeAnnotations.Assembly.
 	*/
 	typedef string assembly_ref;
+	
+	/* A handle for a file stored in Shock.
+		hid - the id of the handle in the Handle Service that references this shock node
+		id - the id for the shock node
+		url - the url of the shock server
+		type - the type of the handle. This should always be shock.
+		file_name - the name of the file
+		remote_md5 - the md5 digest of the file.
+	*/
+	typedef structure {
+		string hid;
+		string file_name;
+		string id;
+		string url;
+		string type;
+		string remote_md5;
+	} Handle;
 
 	/* Input for running QUAST.
 		assemblies - the list of assemblies upon which QUAST will be run.
@@ -31,10 +48,16 @@ module kb_quast {
 		authentication required;
 		
 	/* Ouput of the run_quast function.
-		shock_node - the id of the shock node where the zipped QUAST output is stored.
+		shock_id - the id of the shock node where the zipped QUAST output is stored.
+		handle - the new handle for the shock node.
+		node_file_name - the name of the file stored in Shock.
+		size - the size of the file stored in shock.
 	*/
 	typedef structure {
-		string shock_node;
+		string shock_id;
+		Handle handle;
+		string node_file_name;
+		string size;
 	} QUASTOutput;
 	
 	/* Run QUAST and return a shock node containing the zipped QUAST output. */
