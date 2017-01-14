@@ -1,6 +1,6 @@
 /*
 Wrapper for the QUAST tool. Takes one or more assemblies as input and produces a QUAST report
-stored in a zip file Shock.
+stored in a zip file in Shock.
 */
 
 module kb_quast {
