@@ -1,5 +1,34 @@
 # -*- coding: utf-8 -*-
 #BEGIN_HEADER
+import errno as _errno
+import os as _os
+import time as _time
+import uuid as _uuid
+import subprocess as _subprocess
+from Workspace import WorkspaceClient as _WSClient
+from Workspace.baseclient import ServerError as _WSError
+from DataFileUtil import DataFileUtilClient as _DFUClient
+from DataFileUtil.baseclient import ServerError as _DFUError
+from AssemblyUtil import AssemblyUtilClient as _AssClient
+from AssemblyUtil.baseclient import ServerError as _AssError
+from KBaseReport import KBaseReportClient as _KBRepClient
+
+
+class ObjInfo(object):
+
+    def __init__(self, obj_info):
+        self.id = obj_info[0]
+        self.name = obj_info[1]
+        self.type, self.type_ver = obj_info[2].split('-')
+        self.time = obj_info[3]
+        self.version = obj_info[4]
+        self.saved_by = obj_info[5]
+        self.wsid = obj_info[6]
+        self.workspace = obj_info[7]
+        self.chsum = obj_info[8]
+        self.size = obj_info[9]
+        self.meta = obj_info[10]
+        self.ref = str(self.wsid) + str(self.id) + str(self.version)
 #END_HEADER
 
 
@@ -24,15 +53,70 @@ stored in a zip file Shock.
     GIT_COMMIT_HASH = "77db7a55970d7e14b1e06bb02ca09dfbd58c367b"
 
     #BEGIN_CLASS_HEADER
+
+    ALLOWED_TYPES = ['KBaseGenomes.ContigSet', 'KBaseGenomeAnnotations.Assembly']
+
+    def log(self, message, prefix_newline=False):
+        print(('\n' if prefix_newline else '') + str(_time.time()) + ': ' + message)
+
+    # http://stackoverflow.com/a/600612/643675
+    def mkdir_p(self, path):
+        if not path:
+            return
+        try:
+            _os.makedirs(path)
+        except OSError as exc:
+            if exc.errno == _errno.EEXIST and _os.path.isdir(path):
+                pass
+            else:
+                raise
+
+    def get_assemblies(self, target_dir, object_infos):
+        filepaths = []
+        asscli = _AssClient(self.callback_url)
+        for i in object_infos:
+            fn = _os.path.join(target_dir, i.ref.replace('/', '_'))
+            filepaths.append(fn)
+            self.log('getting assembly from object {} and storing at {}'.format(i.ref, fn))
+            try:
+                asscli.get_assembly_as_fasta({'ref': i.ref, 'filename': fn})
+            except _AssError as asserr:
+                self.log('Logging assembly downloader exception')
+                self.log(str(asserr))
+                raise
+        return filepaths
+
+    def get_assembly_object_info(self, assemblies, token):
+        refs = [{'ref': x} for x in assemblies]
+        ws = _WSClient(self.ws_url, token=token)
+        self.log('Getting object information from workspace')
+        try:
+            info = [ObjInfo(i) for i in ws.get_object_info3({'objects': refs})['infos']]
+        except _WSError as wse:
+            self.log('Logging workspace exception')
+            self.log(str(wse))
+            raise
+        self.log('Object list:')
+        for i in info:
+            self.log('{}/{} {} {}'.format(i.workspace, i.name, i.ref, i.type))
+            if i.type not in self.ALLOWED_TYPES:
+                raise ValueError('Object {} ({}/{}) type {} is not an assembly'
+                                 .format(i.ref, i.workspace, i.name, i.type))
+        absrefs = [i.ref for i in info]
+        if len(set(absrefs)) != len(absrefs):
+            raise ValueError('Duplicate objects detected in input')  # could list objs later
+
     #END_CLASS_HEADER
 
     # config contains contents of config file in a hash or None if it couldn't
     # be found
     def __init__(self, config):
         #BEGIN_CONSTRUCTOR
+        self.scratch = config['scratch']
+        self.callback_url = _os.environ['SDK_CALLBACK_URL']
+        self.ws_url = config['workspace-url']
         #END_CONSTRUCTOR
         pass
-
 
     def run_QUAST_app(self, ctx, params):
         """
@@ -52,6 +136,7 @@ stored in a zip file Shock.
         # ctx is the context object
         # return variables are: output
         #BEGIN run_QUAST_app
+        output = None
         #END run_QUAST_app
 
         # At some point might do deeper type checking...
@@ -78,6 +163,35 @@ stored in a zip file Shock.
         # ctx is the context object
         # return variables are: output
         #BEGIN run_QUAST
+        assemblies = params.get('assemblies')
+        if not assemblies:
+            raise ValueError('No assemblies supplied')
+        self.log('Getting object information from workspace')
+        info = self.get_assembly_object_info(assemblies, ctx['token'])
+
+        tdir = _os.path.join(self.scratch, _uuid.uuid4())
+        self.mkdir_p(tdir)
+        filepaths = self.get_assemblies(tdir, info)
+
+        out = _os.path.join(tdir, 'quast_results')
+        # TODO check for name duplicates in labels and do something about it
+        cmd = ['quast.py', '-o', out, '--labels', ','.join([i.name for i in info]), '--glimmer',
+               '--contig-thresholds', '0,1000,10000,100000,1000000', ' '.join(filepaths)]
+        self.log('running QUAST with command line ' + str(cmd))
+        retcode = _subprocess.call(cmd)
+        self.log('QUAST return code: ' + str(retcode))
+        if retcode:
+            raise ValueError('QUAST reported an error, return code was ' + str(retcode))
+        dfu = _DFUClient(self.callback_url)
+        try:
+            ret = dfu.file_to_shock({'file_path': out, 'make_handle': 1, 'pack': 'zip'})
+        except _DFUError as dfue:
+            self.log('Logging exception loading results to shock')
+            self.log(str(dfue))
+            raise
+        print ret
+
+        output = None
         #END run_QUAST
 
         # At some point might do deeper type checking...
@@ -86,8 +200,10 @@ stored in a zip file Shock.
                              'output is not type dict as required.')
         # return the results
         return [output]
+
     def status(self, ctx):
         #BEGIN_STATUS
+        del ctx
         returnVal = {'state': "OK",
                      'message': "",
                      'version': self.VERSION,
