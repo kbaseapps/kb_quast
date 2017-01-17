@@ -12,6 +12,7 @@ from DataFileUtil.baseclient import ServerError as _DFUError
 from AssemblyUtil import AssemblyUtilClient as _AssClient
 from AssemblyUtil.baseclient import ServerError as _AssError
 from KBaseReport import KBaseReportClient as _KBRepClient
+import psutil
 
 
 class ObjInfo(object):
@@ -56,6 +57,8 @@ stored in a zip file in Shock.
 
     ALLOWED_TYPES = ['KBaseGenomes.ContigSet', 'KBaseGenomeAnnotations.Assembly']
 
+    THREADS_PER_CORE = 1
+
     def log(self, message, prefix_newline=False):
         print(('\n' if prefix_newline else '') + str(_time.time()) + ': ' + message)
 
@@ -74,6 +77,7 @@ stored in a zip file in Shock.
     def get_assemblies(self, target_dir, object_infos):
         filepaths = []
         asscli = _AssClient(self.callback_url)
+        # would be nice the the assembly utils had bulk download...
         for i in object_infos:
             fn = _os.path.join(target_dir, i.ref.replace('/', '_'))
             filepaths.append(fn)
@@ -90,6 +94,7 @@ stored in a zip file in Shock.
         refs = [{'ref': x} for x in assemblies]
         ws = _WSClient(self.ws_url, token=token)
         self.log('Getting object information from workspace')
+        # TODO use this often enough that should add to DFU but return dict vs list
         try:
             info = [ObjInfo(i) for i in ws.get_object_info3({'objects': refs})['infos']]
         except _WSError as wse:
@@ -186,7 +191,9 @@ stored in a zip file in Shock.
 
         out = _os.path.join(tdir, 'quast_results')
         # TODO check for name duplicates in labels and do something about it
-        cmd = ['quast.py', '-o', out, '--labels', ','.join([i.name for i in info]), '--glimmer',
+        threads = psutil.cpu_count() * self.THREADS_PER_CORE
+        cmd = ['quast.py', '--threads', threads, '-o', out,
+               '--labels', ','.join([i.name for i in info]), '--glimmer',
                '--contig-thresholds', '0,1000,10000,100000,1000000', ' '.join(filepaths)]
         self.log('running QUAST with command line ' + str(cmd))
         retcode = _subprocess.call(cmd)
