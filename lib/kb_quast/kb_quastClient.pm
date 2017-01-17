@@ -125,7 +125,11 @@ $params is a kb_quast.QUASTParams
 $output is a kb_quast.QUASTAppOutput
 QUASTParams is a reference to a hash where the following keys are defined:
 	assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
+	files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
 assembly_ref is a string
+FASTAFile is a reference to a hash where the following keys are defined:
+	path has a value which is a string
+	label has a value which is a string
 QUASTAppOutput is a reference to a hash where the following keys are defined:
 	report_name has a value which is a string
 	report_ref has a value which is a string
@@ -140,7 +144,11 @@ $params is a kb_quast.QUASTParams
 $output is a kb_quast.QUASTAppOutput
 QUASTParams is a reference to a hash where the following keys are defined:
 	assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
+	files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
 assembly_ref is a string
+FASTAFile is a reference to a hash where the following keys are defined:
+	path has a value which is a string
+	label has a value which is a string
 QUASTAppOutput is a reference to a hash where the following keys are defined:
 	report_name has a value which is a string
 	report_ref has a value which is a string
@@ -219,7 +227,11 @@ $params is a kb_quast.QUASTParams
 $output is a kb_quast.QUASTOutput
 QUASTParams is a reference to a hash where the following keys are defined:
 	assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
+	files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
 assembly_ref is a string
+FASTAFile is a reference to a hash where the following keys are defined:
+	path has a value which is a string
+	label has a value which is a string
 QUASTOutput is a reference to a hash where the following keys are defined:
 	shock_id has a value which is a string
 	handle has a value which is a kb_quast.Handle
@@ -243,7 +255,11 @@ $params is a kb_quast.QUASTParams
 $output is a kb_quast.QUASTOutput
 QUASTParams is a reference to a hash where the following keys are defined:
 	assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
+	files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
 assembly_ref is a string
+FASTAFile is a reference to a hash where the following keys are defined:
+	path has a value which is a string
+	label has a value which is a string
 QUASTOutput is a reference to a hash where the following keys are defined:
 	shock_id has a value which is a string
 	handle has a value which is a kb_quast.Handle
@@ -486,6 +502,45 @@ remote_md5 has a value which is a string
 
 
 
+=head2 FASTAFile
+
+=over 4
+
+
+
+=item Description
+
+A local FASTA file.
+path - the path to the FASTA file.
+label - the label to use for the file in the QUAST output.
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+path has a value which is a string
+label has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+path has a value which is a string
+label has a value which is a string
+
+
+=end text
+
+=back
+
+
+
 =head2 QUASTParams
 
 =over 4
@@ -496,6 +551,8 @@ remote_md5 has a value which is a string
 
 Input for running QUAST.
 assemblies - the list of assemblies upon which QUAST will be run.
+-OR-
+files - the list of FASTA files upon which QUAST will be run.
 
 
 =item Definition
@@ -505,6 +562,7 @@ assemblies - the list of assemblies upon which QUAST will be run.
 <pre>
 a reference to a hash where the following keys are defined:
 assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
+files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
 
 </pre>
 
@@ -514,6 +572,7 @@ assemblies has a value which is a reference to a list where each element is a kb
 
 a reference to a hash where the following keys are defined:
 assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
+files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
 
 
 =end text

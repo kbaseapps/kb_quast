@@ -26,12 +26,24 @@ module kb_quast {
 		string type;
 		string remote_md5;
 	} Handle;
+	
+	/* A local FASTA file.
+		path - the path to the FASTA file.
+		label - the label to use for the file in the QUAST output.
+	*/
+	typedef structure {
+		string path;
+		string label;
+	} FASTAFile;
 
 	/* Input for running QUAST.
 		assemblies - the list of assemblies upon which QUAST will be run.
+		-OR-
+		files - the list of FASTA files upon which QUAST will be run.
 	*/
 	typedef structure {
 		list<assembly_ref> assemblies;
+		list<FASTAFile> files;
 	} QUASTParams;
 	
 	/* Output of the run_quast_app function.
