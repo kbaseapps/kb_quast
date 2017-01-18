@@ -242,6 +242,7 @@ stored in a zip file in Shock.
             self.log('Logging exception loading results to shock')
             self.log(str(dfue))
             raise
+        #TODO return dir with files
         #END run_QUAST
 
         # At some point might do deeper type checking...
