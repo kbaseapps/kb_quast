@@ -27,7 +27,7 @@ kb_quast::kb_quastClient
 
 
 Wrapper for the QUAST tool. Takes one or more assemblies as input and produces a QUAST report
-stored in a zip file Shock.
+stored in a zip file in Shock.
 
 
 =cut
@@ -125,7 +125,11 @@ $params is a kb_quast.QUASTParams
 $output is a kb_quast.QUASTAppOutput
 QUASTParams is a reference to a hash where the following keys are defined:
 	assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
+	files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
 assembly_ref is a string
+FASTAFile is a reference to a hash where the following keys are defined:
+	path has a value which is a string
+	label has a value which is a string
 QUASTAppOutput is a reference to a hash where the following keys are defined:
 	report_name has a value which is a string
 	report_ref has a value which is a string
@@ -140,7 +144,11 @@ $params is a kb_quast.QUASTParams
 $output is a kb_quast.QUASTAppOutput
 QUASTParams is a reference to a hash where the following keys are defined:
 	assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
+	files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
 assembly_ref is a string
+FASTAFile is a reference to a hash where the following keys are defined:
+	path has a value which is a string
+	label has a value which is a string
 QUASTAppOutput is a reference to a hash where the following keys are defined:
 	report_name has a value which is a string
 	report_ref has a value which is a string
@@ -219,9 +227,23 @@ $params is a kb_quast.QUASTParams
 $output is a kb_quast.QUASTOutput
 QUASTParams is a reference to a hash where the following keys are defined:
 	assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
+	files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
 assembly_ref is a string
+FASTAFile is a reference to a hash where the following keys are defined:
+	path has a value which is a string
+	label has a value which is a string
 QUASTOutput is a reference to a hash where the following keys are defined:
-	shock_node has a value which is a string
+	shock_id has a value which is a string
+	handle has a value which is a kb_quast.Handle
+	node_file_name has a value which is a string
+	size has a value which is a string
+Handle is a reference to a hash where the following keys are defined:
+	hid has a value which is a string
+	file_name has a value which is a string
+	id has a value which is a string
+	url has a value which is a string
+	type has a value which is a string
+	remote_md5 has a value which is a string
 
 </pre>
 
@@ -233,9 +255,23 @@ $params is a kb_quast.QUASTParams
 $output is a kb_quast.QUASTOutput
 QUASTParams is a reference to a hash where the following keys are defined:
 	assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
+	files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
 assembly_ref is a string
+FASTAFile is a reference to a hash where the following keys are defined:
+	path has a value which is a string
+	label has a value which is a string
 QUASTOutput is a reference to a hash where the following keys are defined:
-	shock_node has a value which is a string
+	shock_id has a value which is a string
+	handle has a value which is a kb_quast.Handle
+	node_file_name has a value which is a string
+	size has a value which is a string
+Handle is a reference to a hash where the following keys are defined:
+	hid has a value which is a string
+	file_name has a value which is a string
+	id has a value which is a string
+	url has a value which is a string
+	type has a value which is a string
+	remote_md5 has a value which is a string
 
 
 =end text
@@ -415,6 +451,96 @@ a string
 
 
 
+=head2 Handle
+
+=over 4
+
+
+
+=item Description
+
+A handle for a file stored in Shock.
+hid - the id of the handle in the Handle Service that references this shock node
+id - the id for the shock node
+url - the url of the shock server
+type - the type of the handle. This should always be shock.
+file_name - the name of the file
+remote_md5 - the md5 digest of the file.
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+hid has a value which is a string
+file_name has a value which is a string
+id has a value which is a string
+url has a value which is a string
+type has a value which is a string
+remote_md5 has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+hid has a value which is a string
+file_name has a value which is a string
+id has a value which is a string
+url has a value which is a string
+type has a value which is a string
+remote_md5 has a value which is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 FASTAFile
+
+=over 4
+
+
+
+=item Description
+
+A local FASTA file.
+path - the path to the FASTA file.
+label - the label to use for the file in the QUAST output.
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+path has a value which is a string
+label has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+path has a value which is a string
+label has a value which is a string
+
+
+=end text
+
+=back
+
+
+
 =head2 QUASTParams
 
 =over 4
@@ -425,6 +551,8 @@ a string
 
 Input for running QUAST.
 assemblies - the list of assemblies upon which QUAST will be run.
+-OR-
+files - the list of FASTA files upon which QUAST will be run.
 
 
 =item Definition
@@ -434,6 +562,7 @@ assemblies - the list of assemblies upon which QUAST will be run.
 <pre>
 a reference to a hash where the following keys are defined:
 assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
+files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
 
 </pre>
 
@@ -443,6 +572,7 @@ assemblies has a value which is a reference to a list where each element is a kb
 
 a reference to a hash where the following keys are defined:
 assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
+files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
 
 
 =end text
@@ -499,7 +629,10 @@ report_ref has a value which is a string
 =item Description
 
 Ouput of the run_quast function.
-shock_node - the id of the shock node where the zipped QUAST output is stored.
+shock_id - the id of the shock node where the zipped QUAST output is stored.
+handle - the new handle for the shock node.
+node_file_name - the name of the file stored in Shock.
+size - the size of the file stored in shock.
 
 
 =item Definition
@@ -508,7 +641,10 @@ shock_node - the id of the shock node where the zipped QUAST output is stored.
 
 <pre>
 a reference to a hash where the following keys are defined:
-shock_node has a value which is a string
+shock_id has a value which is a string
+handle has a value which is a kb_quast.Handle
+node_file_name has a value which is a string
+size has a value which is a string
 
 </pre>
 
@@ -517,7 +653,10 @@ shock_node has a value which is a string
 =begin text
 
 a reference to a hash where the following keys are defined:
-shock_node has a value which is a string
+shock_id has a value which is a string
+handle has a value which is a kb_quast.Handle
+node_file_name has a value which is a string
+size has a value which is a string
 
 
 =end text

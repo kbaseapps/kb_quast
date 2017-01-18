@@ -7,13 +7,25 @@ MAINTAINER KBase Developer
 
 # RUN apt-get update
 
+
+RUN apt-get update \
+    && apt-get -y install libboost-all-dev
+
+# DO NOT use install_full - downloads the Silva database, which has a non open source license
+# As a result cannot use MetaQUAST
+# deletes genemark executables, also non open source license
 RUN cd /opt \
     && wget https://downloads.sourceforge.net/project/quast/quast-4.4.tar.gz \
     && tar -xzf quast-4.4.tar.gz \
     && cd quast-4.4 \
-    && ./setup.py install_full \
-    && pip install ipython \
-    && apt-get install nano \
+    && ./setup.py install \
+    && rm -r quast_libs/genemark\
+    && rm -r quast_libs/genemark-es
+
+RUN pip install ipython \
+    && pip install psutil
+
+RUN apt-get install nano \
     && apt-get install tree
 
 # -----------------------------------------
