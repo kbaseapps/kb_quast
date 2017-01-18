@@ -65,12 +65,14 @@ module kb_quast {
 		handle - the new handle for the shock node.
 		node_file_name - the name of the file stored in Shock.
 		size - the size of the file stored in shock.
+		quast_path - the directory containing the quast output and the zipfile of the directory.
 	*/
 	typedef structure {
 		string shock_id;
 		Handle handle;
 		string node_file_name;
 		string size;
+		string quast_path;
 	} QUASTOutput;
 	
 	/* Run QUAST and return a shock node containing the zipped QUAST output. */

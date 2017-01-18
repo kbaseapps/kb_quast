@@ -44,9 +44,9 @@ class kb_quast(object):
            containing an assembly, either a KBaseGenomes.ContigSet or
            KBaseGenomeAnnotations.Assembly.), parameter "files" of list of
            type "FASTAFile" (A local FASTA file. path - the path to the FASTA
-           file. label - the label to use for the file in the QUAST output.)
-           -> structure: parameter "path" of String, parameter "label" of
-           String
+           file. label - the label to use for the file in the QUAST output.
+           If missing, the file name will be used.) -> structure: parameter
+           "path" of String, parameter "label" of String
         :returns: instance of type "QUASTAppOutput" (Output of the
            run_quast_app function. report_name - the name of the
            KBaseReport.Report workspace object. report_ref - the workspace
@@ -68,24 +68,26 @@ class kb_quast(object):
            containing an assembly, either a KBaseGenomes.ContigSet or
            KBaseGenomeAnnotations.Assembly.), parameter "files" of list of
            type "FASTAFile" (A local FASTA file. path - the path to the FASTA
-           file. label - the label to use for the file in the QUAST output.)
-           -> structure: parameter "path" of String, parameter "label" of
-           String
+           file. label - the label to use for the file in the QUAST output.
+           If missing, the file name will be used.) -> structure: parameter
+           "path" of String, parameter "label" of String
         :returns: instance of type "QUASTOutput" (Ouput of the run_quast
            function. shock_id - the id of the shock node where the zipped
            QUAST output is stored. handle - the new handle for the shock
            node. node_file_name - the name of the file stored in Shock. size
-           - the size of the file stored in shock.) -> structure: parameter
-           "shock_id" of String, parameter "handle" of type "Handle" (A
-           handle for a file stored in Shock. hid - the id of the handle in
-           the Handle Service that references this shock node id - the id for
-           the shock node url - the url of the shock server type - the type
-           of the handle. This should always be shock. file_name - the name
-           of the file remote_md5 - the md5 digest of the file.) ->
-           structure: parameter "hid" of String, parameter "file_name" of
-           String, parameter "id" of String, parameter "url" of String,
-           parameter "type" of String, parameter "remote_md5" of String,
-           parameter "node_file_name" of String, parameter "size" of String
+           - the size of the file stored in shock. quast_path - the directory
+           containing the quast output and the zipfile of the directory.) ->
+           structure: parameter "shock_id" of String, parameter "handle" of
+           type "Handle" (A handle for a file stored in Shock. hid - the id
+           of the handle in the Handle Service that references this shock
+           node id - the id for the shock node url - the url of the shock
+           server type - the type of the handle. This should always be shock.
+           file_name - the name of the file remote_md5 - the md5 digest of
+           the file.) -> structure: parameter "hid" of String, parameter
+           "file_name" of String, parameter "id" of String, parameter "url"
+           of String, parameter "type" of String, parameter "remote_md5" of
+           String, parameter "node_file_name" of String, parameter "size" of
+           String, parameter "quast_path" of String
         """
         return self._client.call_method(
             'kb_quast.run_QUAST',

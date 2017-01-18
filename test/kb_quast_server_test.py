@@ -123,6 +123,7 @@ class kb_quastTest(unittest.TestCase):
         self.assertEqual(handleret['id'], shocknode)
         self.assertEqual(handleret['remote_md5'], handle['remote_md5'])
 
+        # check data in shock
         zipdir = os.path.join(self.WORKDIR, str(uuid.uuid4()))
         self.dfu.shock_to_file(
             {'shock_id': shocknode,
@@ -134,5 +135,14 @@ class kb_quastTest(unittest.TestCase):
         self.assertEquals(imd5, icarusmd5)
 
         rmd5 = hashlib.md5(open(os.path.join(zipdir, 'report.txt'), 'rb')
+                           .read()).hexdigest()
+        self.assertEquals(rmd5, repttxtmd5)
+
+        # check data on disk
+        imd5 = hashlib.md5(open(os.path.join(ret['quast_path'], 'icarus.html'), 'rb')
+                           .read()).hexdigest()
+        self.assertEquals(imd5, icarusmd5)
+
+        rmd5 = hashlib.md5(open(os.path.join(ret['quast_path'], 'report.txt'), 'rb')
                            .read()).hexdigest()
         self.assertEquals(rmd5, repttxtmd5)

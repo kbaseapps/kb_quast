@@ -237,6 +237,7 @@ QUASTOutput is a reference to a hash where the following keys are defined:
 	handle has a value which is a kb_quast.Handle
 	node_file_name has a value which is a string
 	size has a value which is a string
+	quast_path has a value which is a string
 Handle is a reference to a hash where the following keys are defined:
 	hid has a value which is a string
 	file_name has a value which is a string
@@ -265,6 +266,7 @@ QUASTOutput is a reference to a hash where the following keys are defined:
 	handle has a value which is a kb_quast.Handle
 	node_file_name has a value which is a string
 	size has a value which is a string
+	quast_path has a value which is a string
 Handle is a reference to a hash where the following keys are defined:
 	hid has a value which is a string
 	file_name has a value which is a string
@@ -512,7 +514,8 @@ remote_md5 has a value which is a string
 
 A local FASTA file.
 path - the path to the FASTA file.
-label - the label to use for the file in the QUAST output.
+label - the label to use for the file in the QUAST output. If missing, the file name will
+be used.
 
 
 =item Definition
@@ -633,6 +636,7 @@ shock_id - the id of the shock node where the zipped QUAST output is stored.
 handle - the new handle for the shock node.
 node_file_name - the name of the file stored in Shock.
 size - the size of the file stored in shock.
+quast_path - the directory containing the quast output and the zipfile of the directory.
 
 
 =item Definition
@@ -645,6 +649,7 @@ shock_id has a value which is a string
 handle has a value which is a kb_quast.Handle
 node_file_name has a value which is a string
 size has a value which is a string
+quast_path has a value which is a string
 
 </pre>
 
@@ -657,6 +662,7 @@ shock_id has a value which is a string
 handle has a value which is a kb_quast.Handle
 node_file_name has a value which is a string
 size has a value which is a string
+quast_path has a value which is a string
 
 
 =end text
