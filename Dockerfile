@@ -11,9 +11,12 @@ RUN cd /opt \
     && wget https://downloads.sourceforge.net/project/quast/quast-4.4.tar.gz \
     && tar -xzf quast-4.4.tar.gz \
     && cd quast-4.4 \
-    && ./setup.py install_full \
-    && pip install ipython \
-    && apt-get install nano \
+    && ./setup.py install_full
+
+RUN pip install ipython \
+    && pip install psutil
+
+RUN apt-get install nano \
     && apt-get install tree
 
 # -----------------------------------------

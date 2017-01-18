@@ -6,14 +6,14 @@ import requests
 
 from os import environ
 import shutil
-import DataFileUtil
 try:
     from ConfigParser import ConfigParser  # py2 @UnusedImport
 except:
     from configparser import ConfigParser  # py3 @UnresolvedImport @Reimport
 
-from Workspace import WorkspaceClient
-from AbstractHandle import AbstractHandleClient as HandleService
+from Workspace.WorkspaceClient import Workspace
+from AbstractHandle.AbstractHandleClient import AbstractHandle as HandleService
+from DataFileUtil.DataFileUtilClient import DataFileUtil
 from kb_quast.kb_quastImpl import kb_quast
 from kb_quast.kb_quastServer import MethodContext
 
@@ -22,14 +22,14 @@ class kb_quastTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        token = environ.get('KB_AUTH_TOKEN', None)
+        cls.token = environ.get('KB_AUTH_TOKEN', None)
         user_id = requests.post(
             'https://kbase.us/services/authorization/Sessions/Login',
-            data='token={}&fields=user_id'.format(token)).json()['user_id']
+            data='token={}&fields=user_id'.format(cls.token)).json()['user_id']
         # WARNING: don't call any logging methods on the context object,
         # it'll result in a NoneType error
         cls.ctx = MethodContext(None)
-        cls.ctx.update({'token': token,
+        cls.ctx.update({'token': cls.token,
                         'user_id': user_id,
                         'provenance': [
                             {'service': 'kb_quast',
@@ -44,7 +44,7 @@ class kb_quastTest(unittest.TestCase):
         for nameval in config.items('kb_quast'):
             cls.cfg[nameval[0]] = nameval[1]
         cls.shockURL = cls.cfg['shock-url']
-        cls.ws = WorkspaceClient(cls.cfg['workspace-url'], token=cls.token)
+        cls.ws = Workspace(cls.cfg['workspace-url'], token=cls.token)
         cls.hs = HandleService(url=cls.cfg['handle-service-url'],
                                token=cls.token)
         cls.impl = kb_quast(cls.cfg)
@@ -58,7 +58,7 @@ class kb_quastTest(unittest.TestCase):
         cls.staged = {}
         cls.nodes_to_delete = []
         cls.handles_to_delete = []
-        cls.setupTestData()
+#         cls.setupTestData()
         print('\n\n=============== Starting tests ==================')
 
     @classmethod
@@ -84,4 +84,9 @@ class kb_quastTest(unittest.TestCase):
         print('Deleted shock node ' + node_id)
 
     def test_quast_fromfile(self):
-        pass
+        ret = self.impl.run_QUAST(self.ctx, {'files': [
+            {'path': 'data/greengenes_UnAligSeq24606.fa', 'label': 'foo'}]})
+        print ret
+        self.delete_shock_node(ret[0]['shock_id'])
+        self.handles_to_delete.append(ret[0]['handle']['hid'])
+        #TODO d/l node and check results (md5 is probably ok)

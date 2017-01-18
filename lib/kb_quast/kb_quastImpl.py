@@ -5,13 +5,13 @@ import os as _os
 import time as _time
 import uuid as _uuid
 import subprocess as _subprocess
-from Workspace import WorkspaceClient as _WSClient
+from Workspace.WorkspaceClient import Workspace as _WSClient
 from Workspace.baseclient import ServerError as _WSError
-from DataFileUtil import DataFileUtilClient as _DFUClient
+from DataFileUtil.DataFileUtilClient import DataFileUtil as _DFUClient
 from DataFileUtil.baseclient import ServerError as _DFUError
-from AssemblyUtil import AssemblyUtilClient as _AssClient
+from AssemblyUtil.AssemblyUtilClient import AssemblyUtil as _AssClient
 from AssemblyUtil.baseclient import ServerError as _AssError
-from KBaseReport import KBaseReportClient as _KBRepClient
+from KBaseReport.KBaseReportClient import KBaseReport as _KBRepClient
 import psutil
 
 
@@ -61,6 +61,9 @@ stored in a zip file in Shock.
 
     def log(self, message, prefix_newline=False):
         print(('\n' if prefix_newline else '') + str(_time.time()) + ': ' + message)
+
+    def xor(self, a, b):
+        return bool(a) != bool(b)
 
     # http://stackoverflow.com/a/600612/643675
     def mkdir_p(self, path):
@@ -189,22 +192,42 @@ stored in a zip file in Shock.
         # ctx is the context object
         # return variables are: output
         #BEGIN run_QUAST
+        self.log('Starting QUAST run. Parameters:')
+        self.log(str(params))
         assemblies = params.get('assemblies')
-        if not assemblies:
-            raise ValueError('No assemblies supplied')
-        self.log('Getting object information from workspace')
-        info = self.get_assembly_object_info(assemblies, ctx['token'])
-
-        tdir = _os.path.join(self.scratch, _uuid.uuid4())
+        files = params.get('files')
+        if not self.xor(assemblies, files):
+            raise ValueError(
+                'One and only one of a list of assembly references or files is required')
+        tdir = _os.path.join(self.scratch, str(_uuid.uuid4()))
         self.mkdir_p(tdir)
-        filepaths = self.get_assemblies(tdir, info)
+        if assemblies:
+            if type(assemblies) != list:
+                raise ValueError('assemblies must be a list')
+            self.log('Getting object information from workspace')
+            info = self.get_assembly_object_info(assemblies, ctx['token'])
+            filepaths = self.get_assemblies(tdir, info)
+            labels = [i.name for i in info]
+        else:
+            if type(files) != list:
+                raise ValueError('files must be a list')
+            filepaths = []
+            labels = []
+            for i, lp in enumerate(files):
+                l = lp.get('label')
+                p = lp.get('path')
+                if not _os.path.isfile(p):
+                    raise ValueError('File entry {}, {}, is not a file', i, p)
+                l = l if l else _os.path.basename(p)
+                filepaths.append(p)
+                labels.append(l)
 
         out = _os.path.join(tdir, 'quast_results')
         # TODO check for name duplicates in labels and do something about it
         threads = psutil.cpu_count() * self.THREADS_PER_CORE
-        cmd = ['quast.py', '--threads', threads, '-o', out,
-               '--labels', ','.join([i.name for i in info]), '--glimmer',
-               '--contig-thresholds', '0,1000,10000,100000,1000000', ' '.join(filepaths)]
+        cmd = ['quast.py', '--threads', str(threads), '-o', out, '--labels', ','.join(labels),
+               '--glimmer', '--contig-thresholds', '0,1000,10000,100000,1000000',
+               ' '.join(filepaths)]
         self.log('running QUAST with command line ' + str(cmd))
         retcode = _subprocess.call(cmd)
         self.log('QUAST return code: ' + str(retcode))
