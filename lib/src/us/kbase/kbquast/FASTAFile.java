@@ -16,7 +16,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * <pre>
  * A local FASTA file.
  * path - the path to the FASTA file.
- * label - the label to use for the file in the QUAST output.
+ * label - the label to use for the file in the QUAST output. If missing, the file name will
+ * be used.
  * </pre>
  * 
  */

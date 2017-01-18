@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * handle - the new handle for the shock node.
  * node_file_name - the name of the file stored in Shock.
  * size - the size of the file stored in shock.
+ * quast_path - the directory containing the quast output and the zipfile of the directory.
  * </pre>
  * 
  */
@@ -28,7 +29,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "shock_id",
     "handle",
     "node_file_name",
-    "size"
+    "size",
+    "quast_path"
 })
 public class QUASTOutput {
 
@@ -53,6 +55,8 @@ public class QUASTOutput {
     private String nodeFileName;
     @JsonProperty("size")
     private String size;
+    @JsonProperty("quast_path")
+    private String quastPath;
     private Map<String, Object> additionalProperties = new HashMap<String, Object>();
 
     @JsonProperty("shock_id")
@@ -141,6 +145,21 @@ public class QUASTOutput {
         return this;
     }
 
+    @JsonProperty("quast_path")
+    public String getQuastPath() {
+        return quastPath;
+    }
+
+    @JsonProperty("quast_path")
+    public void setQuastPath(String quastPath) {
+        this.quastPath = quastPath;
+    }
+
+    public QUASTOutput withQuastPath(String quastPath) {
+        this.quastPath = quastPath;
+        return this;
+    }
+
     @JsonAnyGetter
     public Map<String, Object> getAdditionalProperties() {
         return this.additionalProperties;
@@ -153,7 +172,7 @@ public class QUASTOutput {
 
     @Override
     public String toString() {
-        return ((((((((((("QUASTOutput"+" [shockId=")+ shockId)+", handle=")+ handle)+", nodeFileName=")+ nodeFileName)+", size=")+ size)+", additionalProperties=")+ additionalProperties)+"]");
+        return ((((((((((((("QUASTOutput"+" [shockId=")+ shockId)+", handle=")+ handle)+", nodeFileName=")+ nodeFileName)+", size=")+ size)+", quastPath=")+ quastPath)+", additionalProperties=")+ additionalProperties)+"]");
     }
 
 }

@@ -51,7 +51,7 @@ stored in a zip file in Shock.
     ######################################### noqa
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/mrcreosote/kb_quast"
-    GIT_COMMIT_HASH = "09dd8e51ff53bfe2b18002acf3b5ee782b38c3b9"
+    GIT_COMMIT_HASH = "449f6a5c981fc8958ca68017bf206321e9f39ac2"
 
     #BEGIN_CLASS_HEADER
 
@@ -137,9 +137,9 @@ stored in a zip file in Shock.
            containing an assembly, either a KBaseGenomes.ContigSet or
            KBaseGenomeAnnotations.Assembly.), parameter "files" of list of
            type "FASTAFile" (A local FASTA file. path - the path to the FASTA
-           file. label - the label to use for the file in the QUAST output.)
-           -> structure: parameter "path" of String, parameter "label" of
-           String
+           file. label - the label to use for the file in the QUAST output.
+           If missing, the file name will be used.) -> structure: parameter
+           "path" of String, parameter "label" of String
         :returns: instance of type "QUASTAppOutput" (Output of the
            run_quast_app function. report_name - the name of the
            KBaseReport.Report workspace object. report_ref - the workspace
@@ -170,24 +170,26 @@ stored in a zip file in Shock.
            containing an assembly, either a KBaseGenomes.ContigSet or
            KBaseGenomeAnnotations.Assembly.), parameter "files" of list of
            type "FASTAFile" (A local FASTA file. path - the path to the FASTA
-           file. label - the label to use for the file in the QUAST output.)
-           -> structure: parameter "path" of String, parameter "label" of
-           String
+           file. label - the label to use for the file in the QUAST output.
+           If missing, the file name will be used.) -> structure: parameter
+           "path" of String, parameter "label" of String
         :returns: instance of type "QUASTOutput" (Ouput of the run_quast
            function. shock_id - the id of the shock node where the zipped
            QUAST output is stored. handle - the new handle for the shock
            node. node_file_name - the name of the file stored in Shock. size
-           - the size of the file stored in shock.) -> structure: parameter
-           "shock_id" of String, parameter "handle" of type "Handle" (A
-           handle for a file stored in Shock. hid - the id of the handle in
-           the Handle Service that references this shock node id - the id for
-           the shock node url - the url of the shock server type - the type
-           of the handle. This should always be shock. file_name - the name
-           of the file remote_md5 - the md5 digest of the file.) ->
-           structure: parameter "hid" of String, parameter "file_name" of
-           String, parameter "id" of String, parameter "url" of String,
-           parameter "type" of String, parameter "remote_md5" of String,
-           parameter "node_file_name" of String, parameter "size" of String
+           - the size of the file stored in shock. quast_path - the directory
+           containing the quast output and the zipfile of the directory.) ->
+           structure: parameter "shock_id" of String, parameter "handle" of
+           type "Handle" (A handle for a file stored in Shock. hid - the id
+           of the handle in the Handle Service that references this shock
+           node id - the id for the shock node url - the url of the shock
+           server type - the type of the handle. This should always be shock.
+           file_name - the name of the file remote_md5 - the md5 digest of
+           the file.) -> structure: parameter "hid" of String, parameter
+           "file_name" of String, parameter "id" of String, parameter "url"
+           of String, parameter "type" of String, parameter "remote_md5" of
+           String, parameter "node_file_name" of String, parameter "size" of
+           String, parameter "quast_path" of String
         """
         # ctx is the context object
         # return variables are: output
@@ -242,6 +244,7 @@ stored in a zip file in Shock.
             self.log('Logging exception loading results to shock')
             self.log(str(dfue))
             raise
+        output['quast_path'] = out
         #END run_QUAST
 
         # At some point might do deeper type checking...
