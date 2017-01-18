@@ -225,6 +225,8 @@ stored in a zip file in Shock.
         out = _os.path.join(tdir, 'quast_results')
         # TODO check for name duplicates in labels and do something about it
         threads = psutil.cpu_count() * self.THREADS_PER_CORE
+        # DO NOT use genemark instead of glimmer, not open source
+        # DO NOT use metaQUAST, uses SILVA DB which is not open source
         cmd = ['quast.py', '--threads', str(threads), '-o', out, '--labels', ','.join(labels),
                '--glimmer', '--contig-thresholds', '0,1000,10000,100000,1000000',
                ' '.join(filepaths)]
