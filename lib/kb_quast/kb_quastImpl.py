@@ -29,7 +29,7 @@ class ObjInfo(object):
         self.chsum = obj_info[8]
         self.size = obj_info[9]
         self.meta = obj_info[10]
-        self.ref = str(self.wsid) + str(self.id) + str(self.version)
+        self.ref = str(self.wsid) + '/' + str(self.id) + '/' + str(self.version)
 #END_HEADER
 
 
@@ -54,8 +54,6 @@ stored in a zip file in Shock.
     GIT_COMMIT_HASH = "449f6a5c981fc8958ca68017bf206321e9f39ac2"
 
     #BEGIN_CLASS_HEADER
-
-    ALLOWED_TYPES = ['KBaseGenomes.ContigSet', 'KBaseGenomeAnnotations.Assembly']
 
     THREADS_PER_CORE = 1
 
@@ -105,14 +103,36 @@ stored in a zip file in Shock.
             self.log(str(wse))
             raise
         self.log('Object list:')
-        for i in info:
+        for i in info:  # don't check type - assemblyutils should handle that
             self.log('{}/{} {} {}'.format(i.workspace, i.name, i.ref, i.type))
-            if i.type not in self.ALLOWED_TYPES:
-                raise ValueError('Object {} ({}/{}) type {} is not an assembly'
-                                 .format(i.ref, i.workspace, i.name, i.type))
         absrefs = [i.ref for i in info]
         if len(set(absrefs)) != len(absrefs):
             raise ValueError('Duplicate objects detected in input')  # could list objs later
+        return info
+
+    def run_quast_exec(self, outdir, filepaths, labels):
+        threads = psutil.cpu_count() * self.THREADS_PER_CORE
+        # DO NOT use genemark instead of glimmer, not open source
+        # DO NOT use metaQUAST, uses SILVA DB which is not open source
+        cmd = ['quast.py', '--threads', str(threads), '-o', outdir, '--labels', ','.join(labels),
+               '--glimmer', '--contig-thresholds', '0,1000,10000,100000,1000000'] + filepaths
+        self.log('running QUAST with command line ' + str(cmd))
+        retcode = _subprocess.call(cmd)
+        self.log('QUAST return code: ' + str(retcode))
+        if retcode:
+            # can't actually figure out how to test this. Give quast garbage it skips the file.
+            # Give quast a file with a missing sequence it acts completely normally.
+            raise ValueError('QUAST reported an error, return code was ' + str(retcode))
+        # quast will ignore bad files and keep going, which is a disaster for
+        # reproducibility and accuracy if you're not watching the logs like a hawk.
+        # for now use this hack to check that all files were processed. Maybe there's a better way.
+        files_proc = len(_os.listdir(_os.path.join(outdir, 'predicted_genes'))) / 2
+        files_exp = len(filepaths)
+        if files_proc != files_exp:
+            err = ('QUAST skipped some files - {} expected, {} processed.'
+                   .format(files_exp, files_proc))
+            self.log(err)
+            raise ValueError(err)
 
     #END_CLASS_HEADER
 
@@ -206,7 +226,6 @@ stored in a zip file in Shock.
         if assemblies:
             if type(assemblies) != list:
                 raise ValueError('assemblies must be a list')
-            self.log('Getting object information from workspace')
             info = self.get_assembly_object_info(assemblies, ctx['token'])
             filepaths = self.get_assemblies(tdir, info)
             labels = [i.name for i in info]
@@ -219,28 +238,19 @@ stored in a zip file in Shock.
                 l = lp.get('label')
                 p = lp.get('path')
                 if not _os.path.isfile(p):
-                    raise ValueError('File entry {}, {}, is not a file', i, p)
+                    raise ValueError('File entry {}, {}, is not a file'.format(i + 1, p))
                 l = l if l else _os.path.basename(p)
                 filepaths.append(p)
                 labels.append(l)
 
         out = _os.path.join(tdir, 'quast_results')
         # TODO check for name duplicates in labels and do something about it
-        threads = psutil.cpu_count() * self.THREADS_PER_CORE
-        # DO NOT use genemark instead of glimmer, not open source
-        # DO NOT use metaQUAST, uses SILVA DB which is not open source
-        cmd = ['quast.py', '--threads', str(threads), '-o', out, '--labels', ','.join(labels),
-               '--glimmer', '--contig-thresholds', '0,1000,10000,100000,1000000',
-               ' '.join(filepaths)]
-        self.log('running QUAST with command line ' + str(cmd))
-        retcode = _subprocess.call(cmd)
-        self.log('QUAST return code: ' + str(retcode))
-        if retcode:
-            raise ValueError('QUAST reported an error, return code was ' + str(retcode))
+        self.run_quast_exec(out, filepaths, labels)
         dfu = _DFUClient(self.callback_url)
         try:
             output = dfu.file_to_shock({'file_path': out, 'make_handle': 1, 'pack': 'zip'})
         except _DFUError as dfue:
+            # not really any way to test this block
             self.log('Logging exception loading results to shock')
             self.log(str(dfue))
             raise

@@ -8,14 +8,18 @@ from os import environ
 import shutil
 import uuid
 import hashlib
+import inspect
 try:
     from ConfigParser import ConfigParser  # py2 @UnusedImport
 except:
     from configparser import ConfigParser  # py3 @UnresolvedImport @Reimport
 
 from Workspace.WorkspaceClient import Workspace
+from Workspace.baseclient import ServerError as WorkspaceError
 from AbstractHandle.AbstractHandleClient import AbstractHandle as HandleService
 from DataFileUtil.DataFileUtilClient import DataFileUtil
+from AssemblyUtil.AssemblyUtilClient import AssemblyUtil
+from AssemblyUtil.baseclient import ServerError as AssemblyError
 from kb_quast.kb_quastImpl import kb_quast
 from kb_quast.kb_quastServer import MethodContext
 
@@ -51,6 +55,7 @@ class kb_quastTest(unittest.TestCase):
         cls.ws = Workspace(cls.cfg['workspace-url'], token=cls.token)
         cls.hs = HandleService(url=cls.cfg['handle-service-url'],
                                token=cls.token)
+        cls.au = AssemblyUtil(os.environ['SDK_CALLBACK_URL'])
         cls.impl = kb_quast(cls.cfg)
         cls.scratch = cls.cfg['scratch']
         shutil.rmtree(cls.scratch)
@@ -58,7 +63,7 @@ class kb_quastTest(unittest.TestCase):
         suffix = int(time.time() * 1000)
         wsName = "test_ReadsUtils_" + str(suffix)
         cls.ws_info = cls.ws.create_workspace({'workspace': wsName})
-        cls.dfu = DataFileUtil(os.environ['SDK_CALLBACK_URL'], token=cls.token)
+        cls.dfu = DataFileUtil(os.environ['SDK_CALLBACK_URL'])
         cls.staged = {}
         cls.nodes_to_delete = []
         cls.handles_to_delete = []
@@ -74,8 +79,9 @@ class kb_quastTest(unittest.TestCase):
             for node in cls.nodes_to_delete:
                 cls.delete_shock_node(node)
         if hasattr(cls, 'handles_to_delete'):
-            cls.hs.delete_handles(cls.hs.hids_to_handles(cls.handles_to_delete))
-            print('Deleted handles ' + str(cls.handles_to_delete))
+            if cls.handles_to_delete:
+                cls.hs.delete_handles(cls.hs.hids_to_handles(cls.handles_to_delete))
+                print('Deleted handles ' + str(cls.handles_to_delete))
 
     def getWsName(self):
         return self.ws_info[1]
@@ -87,11 +93,148 @@ class kb_quastTest(unittest.TestCase):
                         allow_redirects=True)
         print('Deleted shock node ' + node_id)
 
+    def start_test(self):
+        test_name = inspect.stack()[1][3]
+        print('\n*** starting test: ' + test_name + ' **')
+
     def test_quast_from_1_file(self):
+        self.start_test()
         ret = self.impl.run_QUAST(self.ctx, {'files': [
-            {'path': 'data/greengenes_UnAligSeq24606.fa', 'label': 'foo'}]})[0]
-        self.check_quast_output(ret, 313780, 313800, '7b5fcb9f4a41d1a047227139fbd8aa60',
-                                'cd39eb4fd8ba1dad7e9133814fb0e2bc')
+            {'path': 'data/greengenes_UnAligSeq24606.fa', 'label': 'foobar'}]})[0]
+        self.check_quast_output(ret, 315250, 315280, '51b78e4ff2ff7a2f864769ff02d95f92',
+                                'dff937c5ed36a38345d057ea0b5c3e9e')
+
+    def test_quast_from_2_files(self):
+        self.start_test()
+        ret = self.impl.run_QUAST(self.ctx, {'files': [
+            {'path': 'data/greengenes_UnAligSeq24606.fa', 'label': 'foo'},
+            {'path': 'data/greengenes_UnAligSeq24606_edit1.fa'}]})[0]
+        self.check_quast_output(ret, 324690, 324730, 'b45307b9bed53de2fa0d0b9780be3faf',
+                                '862913a9383b42d0f0fb95beb113296f')
+
+    def test_quast_from_1_wsobj(self):
+        self.start_test()
+        tf = 'greengenes_UnAligSeq24606_edit1.fa'
+        target = os.path.join(self.scratch, tf)
+        shutil.copy('data/' + tf, target)
+        ref = self.au.save_assembly_from_fasta(
+            {'file': {'path': target},
+             'workspace_name': self.ws_info[1],
+             'assembly_name': 'assy1'})
+        ret = self.impl.run_QUAST(self.ctx, {'assemblies': [ref]})[0]
+        self.check_quast_output(ret, 315180, 315200, '6aae4f232d4d011210eca1965093c22d',
+                                '2010dc270160ee661d76dad6051cda32')
+
+    def test_quast_from_2_wsobj(self):
+        self.start_test()
+        tf = 'greengenes_UnAligSeq24606_edit1.fa'
+        target = os.path.join(self.scratch, tf)
+        shutil.copy('data/' + tf, target)
+        ref1 = self.au.save_assembly_from_fasta(
+            {'file': {'path': target},
+             'workspace_name': self.ws_info[1],
+             'assembly_name': 'assy1'})
+
+        tf = 'greengenes_UnAligSeq24606.fa'
+        target = os.path.join(self.scratch, tf)
+        shutil.copy('data/' + tf, target)
+        ref2 = self.au.save_assembly_from_fasta(
+            {'file': {'path': target},
+             'workspace_name': self.ws_info[1],
+             'assembly_name': 'JohnCleeseLust'})
+
+        # test using names vs ids
+        objs = self.ws.get_object_info3({'objects': [{'ref': ref1}, {'ref', ref2}]})['infos']
+        wsref1 = str(objs[0][7] + '/' + str(objs[0][1]))
+        wsref2 = str(objs[1][7] + '/' + str(objs[1][1]))
+
+        ret = self.impl.run_QUAST(self.ctx, {'assemblies': [wsref1, wsref2]})[0]
+        self.check_quast_output(ret, 320910, 320950, '5648903ef181d4ab189a206f6be28c47',
+                                'f48d2c38619ef93ae8972ce4e6ebcbf4')
+
+    def test_fail_no_input(self):
+        self.start_test()
+        self.fail_quast(
+            {}, 'One and only one of a list of assembly references or files is required')
+
+    def test_fail_2_input(self):
+        self.start_test()
+        self.fail_quast(
+            {'files': ['foo'], 'assemblies': ['bar']},
+            'One and only one of a list of assembly references or files is required')
+
+    def test_fail_bad_assy_list(self):
+        self.start_test()
+        self.fail_quast(
+            {'assemblies': {'foo': 'bar'}},
+            'assemblies must be a list')
+
+    def test_fail_bad_file_list(self):
+        self.start_test()
+        self.fail_quast(
+            {'files': {'foo': 'bar'}},
+            'files must be a list')
+
+    def test_fail_bad_file(self):
+        self.start_test()
+        self.fail_quast(
+            {'files': [{'path': 'data/greengenes_UnAligSeq24606.fa'}, {'path': 'data/foobar.fa'}]},
+            'File entry 2, data/foobar.fa, is not a file')
+
+    def test_fail_bad_quast_input_garbage(self):
+        self.start_test()
+        self.fail_quast(
+            {'files': [{'path': 'data/greengenes_UnAligSeq24606.fa'},
+                       {'path': 'data/greengenes_UnAligSeq24606_garbage.fa'}]},
+            'QUAST skipped some files - 2 expected, 1 processed.')
+
+    def test_fail_bad_ws_ref(self):
+        self.start_test()
+        self.fail_quast(
+            {'assemblies': [str(self.ws_info[0]) + '/999999999999/999999']},
+            'No object with id 999999999999 exists in workspace {} (name {})'.format(
+                self.ws_info[0], self.ws_info[1]),
+            exception=WorkspaceError)
+
+    def test_fail_bad_ws_type(self):
+        self.start_test()
+        bad_object_type = {'type': 'Empty.AType',
+                           'data': {'foo': 3},
+                           'name': "bad_object"
+                           }
+        bad_object = self.dfu.save_objects({'id': self.ws_info[0],
+                                            'objects':
+                                            [bad_object_type]})[0]
+        bo_type = bad_object[2]
+        md5type = self.ws.translate_to_MD5_types([bo_type])[bo_type]
+        bad_object_ref = str(bad_object[6]) + '/' + str(bad_object[0]) + '/' + str(bad_object[4])
+        self.fail_quast(
+            {'assemblies': [bad_object_ref]},
+            "Invalid type! Expected one of ['KBaseGenomes.ContigSet', " +
+            "'KBaseGenomeAnnotations.Assembly'], received {}".format(md5type),
+            exception=AssemblyError)
+
+    def test_fail_duplicate_objects(self):
+        self.start_test()
+        tf = 'greengenes_UnAligSeq24606_edit1.fa'
+        target = os.path.join(self.scratch, tf)
+        shutil.copy('data/' + tf, target)
+        ref1 = self.au.save_assembly_from_fasta(
+            {'file': {'path': target},
+             'workspace_name': self.ws_info[1],
+             'assembly_name': 'assy1'})
+
+        objs = self.ws.get_object_info3({'objects': [{'ref': ref1}]})['infos']
+        wsref1 = str(objs[0][7] + '/' + str(objs[0][1]))
+
+        self.fail_quast(
+            {'assemblies': [ref1, wsref1]},
+            'Duplicate objects detected in input')
+
+    def fail_quast(self, params, error, exception=ValueError):
+        with self.assertRaises(exception) as context:
+            self.impl.run_QUAST(self.ctx, params)
+        self.assertEqual(error, str(context.exception.message))
 
     def check_quast_output(self, ret, minsize, maxsize, repttxtmd5, icarusmd5):
         filename = 'quast_results.zip'
@@ -130,19 +273,17 @@ class kb_quastTest(unittest.TestCase):
              'unpack': 'unpack',
              'file_path': os.path.join(zipdir, filename)
              })
+        rmd5 = hashlib.md5(open(os.path.join(zipdir, 'report.txt'), 'rb')
+                           .read()).hexdigest()
+        self.assertEquals(rmd5, repttxtmd5)
         imd5 = hashlib.md5(open(os.path.join(zipdir, 'icarus.html'), 'rb')
                            .read()).hexdigest()
         self.assertEquals(imd5, icarusmd5)
 
-        rmd5 = hashlib.md5(open(os.path.join(zipdir, 'report.txt'), 'rb')
-                           .read()).hexdigest()
-        self.assertEquals(rmd5, repttxtmd5)
-
         # check data on disk
-        imd5 = hashlib.md5(open(os.path.join(ret['quast_path'], 'icarus.html'), 'rb')
-                           .read()).hexdigest()
-        self.assertEquals(imd5, icarusmd5)
-
         rmd5 = hashlib.md5(open(os.path.join(ret['quast_path'], 'report.txt'), 'rb')
                            .read()).hexdigest()
         self.assertEquals(rmd5, repttxtmd5)
+        imd5 = hashlib.md5(open(os.path.join(ret['quast_path'], 'icarus.html'), 'rb')
+                           .read()).hexdigest()
+        self.assertEquals(imd5, icarusmd5)
