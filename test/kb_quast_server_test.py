@@ -15,9 +15,11 @@ except:
     from configparser import ConfigParser  # py3 @UnresolvedImport @Reimport
 
 from Workspace.WorkspaceClient import Workspace
+from Workspace.baseclient import ServerError as WorkspaceError
 from AbstractHandle.AbstractHandleClient import AbstractHandle as HandleService
 from DataFileUtil.DataFileUtilClient import DataFileUtil
 from AssemblyUtil.AssemblyUtilClient import AssemblyUtil
+from AssemblyUtil.baseclient import ServerError as AssemblyError
 from kb_quast.kb_quastImpl import kb_quast
 from kb_quast.kb_quastServer import MethodContext
 
@@ -77,8 +79,9 @@ class kb_quastTest(unittest.TestCase):
             for node in cls.nodes_to_delete:
                 cls.delete_shock_node(node)
         if hasattr(cls, 'handles_to_delete'):
-            cls.hs.delete_handles(cls.hs.hids_to_handles(cls.handles_to_delete))
-            print('Deleted handles ' + str(cls.handles_to_delete))
+            if cls.handles_to_delete:
+                cls.hs.delete_handles(cls.hs.hids_to_handles(cls.handles_to_delete))
+                print('Deleted handles ' + str(cls.handles_to_delete))
 
     def getWsName(self):
         return self.ws_info[1]
@@ -140,9 +143,98 @@ class kb_quastTest(unittest.TestCase):
              'workspace_name': self.ws_info[1],
              'assembly_name': 'JohnCleeseLust'})
 
-        ret = self.impl.run_QUAST(self.ctx, {'assemblies': [ref1, ref2]})[0]
-        self.check_quast_output(ret, 320910, 320940, '5648903ef181d4ab189a206f6be28c47',
+        # test using names vs ids
+        objs = self.ws.get_object_info3({'objects': [{'ref': ref1}, {'ref', ref2}]})['infos']
+        wsref1 = str(objs[0][7] + '/' + str(objs[0][1]))
+        wsref2 = str(objs[1][7] + '/' + str(objs[1][1]))
+
+        ret = self.impl.run_QUAST(self.ctx, {'assemblies': [wsref1, wsref2]})[0]
+        self.check_quast_output(ret, 320910, 320950, '5648903ef181d4ab189a206f6be28c47',
                                 'f48d2c38619ef93ae8972ce4e6ebcbf4')
+
+    def test_fail_no_input(self):
+        self.start_test()
+        self.fail_quast(
+            {}, 'One and only one of a list of assembly references or files is required')
+
+    def test_fail_2_input(self):
+        self.start_test()
+        self.fail_quast(
+            {'files': ['foo'], 'assemblies': ['bar']},
+            'One and only one of a list of assembly references or files is required')
+
+    def test_fail_bad_assy_list(self):
+        self.start_test()
+        self.fail_quast(
+            {'assemblies': {'foo': 'bar'}},
+            'assemblies must be a list')
+
+    def test_fail_bad_file_list(self):
+        self.start_test()
+        self.fail_quast(
+            {'files': {'foo': 'bar'}},
+            'files must be a list')
+
+    def test_fail_bad_file(self):
+        self.start_test()
+        self.fail_quast(
+            {'files': [{'path': 'data/greengenes_UnAligSeq24606.fa'}, {'path': 'data/foobar.fa'}]},
+            'File entry 2, data/foobar.fa, is not a file')
+
+    def test_fail_bad_quast_input_garbage(self):
+        self.start_test()
+        self.fail_quast(
+            {'files': [{'path': 'data/greengenes_UnAligSeq24606.fa'},
+                       {'path': 'data/greengenes_UnAligSeq24606_garbage.fa'}]},
+            'QUAST skipped some files - 2 expected, 1 processed.')
+
+    def test_fail_bad_ws_ref(self):
+        self.start_test()
+        self.fail_quast(
+            {'assemblies': [str(self.ws_info[0]) + '/999999999999/999999']},
+            'No object with id 999999999999 exists in workspace {} (name {})'.format(
+                self.ws_info[0], self.ws_info[1]),
+            exception=WorkspaceError)
+
+    def test_fail_bad_ws_type(self):
+        self.start_test()
+        bad_object_type = {'type': 'Empty.AType',
+                           'data': {'foo': 3},
+                           'name': "bad_object"
+                           }
+        bad_object = self.dfu.save_objects({'id': self.ws_info[0],
+                                            'objects':
+                                            [bad_object_type]})[0]
+        bo_type = bad_object[2]
+        md5type = self.ws.translate_to_MD5_types([bo_type])[bo_type]
+        bad_object_ref = str(bad_object[6]) + '/' + str(bad_object[0]) + '/' + str(bad_object[4])
+        self.fail_quast(
+            {'assemblies': [bad_object_ref]},
+            "Invalid type! Expected one of ['KBaseGenomes.ContigSet', " +
+            "'KBaseGenomeAnnotations.Assembly'], received {}".format(md5type),
+            exception=AssemblyError)
+
+    def test_fail_duplicate_objects(self):
+        self.start_test()
+        tf = 'greengenes_UnAligSeq24606_edit1.fa'
+        target = os.path.join(self.scratch, tf)
+        shutil.copy('data/' + tf, target)
+        ref1 = self.au.save_assembly_from_fasta(
+            {'file': {'path': target},
+             'workspace_name': self.ws_info[1],
+             'assembly_name': 'assy1'})
+
+        objs = self.ws.get_object_info3({'objects': [{'ref': ref1}]})['infos']
+        wsref1 = str(objs[0][7] + '/' + str(objs[0][1]))
+
+        self.fail_quast(
+            {'assemblies': [ref1, wsref1]},
+            'Duplicate objects detected in input')
+
+    def fail_quast(self, params, error, exception=ValueError):
+        with self.assertRaises(exception) as context:
+            self.impl.run_QUAST(self.ctx, params)
+        self.assertEqual(error, str(context.exception.message))
 
     def check_quast_output(self, ret, minsize, maxsize, repttxtmd5, icarusmd5):
         filename = 'quast_results.zip'
