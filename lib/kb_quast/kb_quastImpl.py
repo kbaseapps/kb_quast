@@ -29,7 +29,7 @@ class ObjInfo(object):
         self.chsum = obj_info[8]
         self.size = obj_info[9]
         self.meta = obj_info[10]
-        self.ref = str(self.wsid) + str(self.id) + str(self.version)
+        self.ref = str(self.wsid) + '/' + str(self.id) + '/' + str(self.version)
 #END_HEADER
 
 
@@ -113,6 +113,7 @@ stored in a zip file in Shock.
         absrefs = [i.ref for i in info]
         if len(set(absrefs)) != len(absrefs):
             raise ValueError('Duplicate objects detected in input')  # could list objs later
+        return info
 
     #END_CLASS_HEADER
 
@@ -206,7 +207,6 @@ stored in a zip file in Shock.
         if assemblies:
             if type(assemblies) != list:
                 raise ValueError('assemblies must be a list')
-            self.log('Getting object information from workspace')
             info = self.get_assembly_object_info(assemblies, ctx['token'])
             filepaths = self.get_assemblies(tdir, info)
             labels = [i.name for i in info]
