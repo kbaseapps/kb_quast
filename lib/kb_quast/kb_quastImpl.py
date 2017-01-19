@@ -219,7 +219,7 @@ stored in a zip file in Shock.
                 l = lp.get('label')
                 p = lp.get('path')
                 if not _os.path.isfile(p):
-                    raise ValueError('File entry {}, {}, is not a file', i, p)
+                    raise ValueError('File entry {}, {}, is not a file'.format(i + 1, p))
                 l = l if l else _os.path.basename(p)
                 filepaths.append(p)
                 labels.append(l)
@@ -230,8 +230,7 @@ stored in a zip file in Shock.
         # DO NOT use genemark instead of glimmer, not open source
         # DO NOT use metaQUAST, uses SILVA DB which is not open source
         cmd = ['quast.py', '--threads', str(threads), '-o', out, '--labels', ','.join(labels),
-               '--glimmer', '--contig-thresholds', '0,1000,10000,100000,1000000',
-               ' '.join(filepaths)]
+               '--glimmer', '--contig-thresholds', '0,1000,10000,100000,1000000'] + filepaths
         self.log('running QUAST with command line ' + str(cmd))
         retcode = _subprocess.call(cmd)
         self.log('QUAST return code: ' + str(retcode))

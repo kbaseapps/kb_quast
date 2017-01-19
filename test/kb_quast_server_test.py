@@ -90,8 +90,15 @@ class kb_quastTest(unittest.TestCase):
     def test_quast_from_1_file(self):
         ret = self.impl.run_QUAST(self.ctx, {'files': [
             {'path': 'data/greengenes_UnAligSeq24606.fa', 'label': 'foo'}]})[0]
-        self.check_quast_output(ret, 313780, 313800, '7b5fcb9f4a41d1a047227139fbd8aa60',
+        self.check_quast_output(ret, 313770, 313800, '7b5fcb9f4a41d1a047227139fbd8aa60',
                                 'cd39eb4fd8ba1dad7e9133814fb0e2bc')
+
+    def test_quast_from_2_files(self):
+        ret = self.impl.run_QUAST(self.ctx, {'files': [
+            {'path': 'data/greengenes_UnAligSeq24606.fa', 'label': 'foo'},
+            {'path': 'data/greengenes_UnAligSeq24606_edit1.fa'}]})[0]
+        self.check_quast_output(ret, 324700, 324730, 'b45307b9bed53de2fa0d0b9780be3faf',
+                                '862913a9383b42d0f0fb95beb113296f')
 
     def check_quast_output(self, ret, minsize, maxsize, repttxtmd5, icarusmd5):
         filename = 'quast_results.zip'
