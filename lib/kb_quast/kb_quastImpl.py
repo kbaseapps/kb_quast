@@ -105,11 +105,8 @@ stored in a zip file in Shock.
             self.log(str(wse))
             raise
         self.log('Object list:')
-        for i in info:
+        for i in info:  # don't check type - assemblyutils should handle that
             self.log('{}/{} {} {}'.format(i.workspace, i.name, i.ref, i.type))
-            if i.type not in self.ALLOWED_TYPES:
-                raise ValueError('Object {} ({}/{}) type {} is not an assembly'
-                                 .format(i.ref, i.workspace, i.name, i.type))
         absrefs = [i.ref for i in info]
         if len(set(absrefs)) != len(absrefs):
             raise ValueError('Duplicate objects detected in input')  # could list objs later
