@@ -97,9 +97,9 @@ class kb_quastTest(unittest.TestCase):
     def test_quast_from_1_file(self):
         self.start_test()
         ret = self.impl.run_QUAST(self.ctx, {'files': [
-            {'path': 'data/greengenes_UnAligSeq24606.fa', 'label': 'foo'}]})[0]
-        self.check_quast_output(ret, 313770, 313800, '7b5fcb9f4a41d1a047227139fbd8aa60',
-                                'cd39eb4fd8ba1dad7e9133814fb0e2bc')
+            {'path': 'data/greengenes_UnAligSeq24606.fa', 'label': 'foobar'}]})[0]
+        self.check_quast_output(ret, 315250, 315280, '51b78e4ff2ff7a2f864769ff02d95f92',
+                                'dff937c5ed36a38345d057ea0b5c3e9e')
 
     def test_quast_from_2_files(self):
         self.start_test()
