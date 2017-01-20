@@ -1,6 +1,6 @@
 name     : Run QUAST
-subtitle : none
-tooltip  : Runs QUAST on a set of assemblies.
+subtitle : Run QUAST on a set of assemblies.
+tooltip  : Run QUAST on a set of assemblies.
 
 screenshots :
     []
@@ -36,7 +36,7 @@ publications:
         link: https://www.ncbi.nlm.nih.gov/pubmed/23422339
         pmid: 23422339
     -
-        display-test: |
+        display-text: |
             Alla Mikheenko, Gleb Valin, Andrey Prjibelski, Vladislav Saveliev, Alexey Gurevich, Icarus: visualizer for de novo assembly evaluation, Bioinformatics (2016). doi: 10.1093/bioinformatics/btw379 First published online: July 4, 2016
         link: https://www.ncbi.nlm.nih.gov/pubmed/27378299
         pmid: 27378299
