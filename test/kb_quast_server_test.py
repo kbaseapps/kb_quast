@@ -94,22 +94,42 @@ class kb_quastTest(unittest.TestCase):
         print('Deleted shock node ' + node_id)
 
     def start_test(self):
-        test_name = inspect.stack()[1][3]
-        print('\n*** starting test: ' + test_name + ' **')
+        testname = inspect.stack()[1][3]
+        print('\n*** starting test: ' + testname + ' **')
+
+
+# ***** quast as local method tests ************************
+
+    # TODO test without making a handle
 
     def test_quast_from_1_file(self):
         self.start_test()
         ret = self.impl.run_QUAST(self.ctx, {'files': [
-            {'path': 'data/greengenes_UnAligSeq24606.fa', 'label': 'foobar'}]})[0]
+            {'path': 'data/greengenes_UnAligSeq24606.fa', 'label': 'foobar'}],
+                                             'make_handle': 1})[0]
         self.check_quast_output(ret, 315250, 315280, '51b78e4ff2ff7a2f864769ff02d95f92',
                                 'dff937c5ed36a38345d057ea0b5c3e9e')
+
+    def test_quast_no_handle(self):
+        self.start_test()
+        ret = self.impl.run_QUAST(self.ctx, {'files': [
+            {'path': 'data/greengenes_UnAligSeq24606.fa', 'label': 'foobar'}],
+                                             'make_handle': 0})[0]
+        self.check_quast_output(ret, 315250, 315280, '51b78e4ff2ff7a2f864769ff02d95f92',
+                                'dff937c5ed36a38345d057ea0b5c3e9e', no_handle=True)
+
+        ret = self.impl.run_QUAST(self.ctx, {'files': [
+            {'path': 'data/greengenes_UnAligSeq24606.fa', 'label': 'foobar'}]})[0]
+        self.check_quast_output(ret, 315250, 315280, '51b78e4ff2ff7a2f864769ff02d95f92',
+                                'dff937c5ed36a38345d057ea0b5c3e9e', no_handle=True)
 
     def test_quast_from_2_files(self):
         self.start_test()
         ret = self.impl.run_QUAST(self.ctx, {'files': [
             {'path': 'data/greengenes_UnAligSeq24606.fa', 'label': 'foo'},
-            {'path': 'data/greengenes_UnAligSeq24606_edit1.fa'}]})[0]
-        self.check_quast_output(ret, 324690, 324730, 'b45307b9bed53de2fa0d0b9780be3faf',
+            {'path': 'data/greengenes_UnAligSeq24606_edit1.fa'}],
+                                             'make_handle': 1})[0]
+        self.check_quast_output(ret, 324690, 324740, 'b45307b9bed53de2fa0d0b9780be3faf',
                                 '862913a9383b42d0f0fb95beb113296f')
 
     def test_quast_from_1_wsobj(self):
@@ -121,7 +141,7 @@ class kb_quastTest(unittest.TestCase):
             {'file': {'path': target},
              'workspace_name': self.ws_info[1],
              'assembly_name': 'assy1'})
-        ret = self.impl.run_QUAST(self.ctx, {'assemblies': [ref]})[0]
+        ret = self.impl.run_QUAST(self.ctx, {'assemblies': [ref], 'make_handle': 1})[0]
         self.check_quast_output(ret, 315180, 315200, '6aae4f232d4d011210eca1965093c22d',
                                 '2010dc270160ee661d76dad6051cda32')
 
@@ -144,11 +164,11 @@ class kb_quastTest(unittest.TestCase):
              'assembly_name': 'JohnCleeseLust'})
 
         # test using names vs ids
-        objs = self.ws.get_object_info3({'objects': [{'ref': ref1}, {'ref', ref2}]})['infos']
+        objs = self.ws.get_object_info3({'objects': [{'ref': ref1}, {'ref': ref2}]})['infos']
         wsref1 = str(objs[0][7] + '/' + str(objs[0][1]))
         wsref2 = str(objs[1][7] + '/' + str(objs[1][1]))
 
-        ret = self.impl.run_QUAST(self.ctx, {'assemblies': [wsref1, wsref2]})[0]
+        ret = self.impl.run_QUAST(self.ctx, {'assemblies': [wsref1, wsref2], 'make_handle': 1})[0]
         self.check_quast_output(ret, 320910, 320950, '5648903ef181d4ab189a206f6be28c47',
                                 'f48d2c38619ef93ae8972ce4e6ebcbf4')
 
@@ -231,17 +251,91 @@ class kb_quastTest(unittest.TestCase):
             {'assemblies': [ref1, wsref1]},
             'Duplicate objects detected in input')
 
+# ****** test quast app tests *******************************
+
+    # TODO unhappy path tests
+
+    def test_quast_app(self):
+        # only one happy path through the run_QUAST_app code
+        self.start_test()
+        tf = 'greengenes_UnAligSeq24606_edit1.fa'
+        target = os.path.join(self.scratch, tf)
+        shutil.copy('data/' + tf, target)
+        ref = self.au.save_assembly_from_fasta(
+            {'file': {'path': target},
+             'workspace_name': self.ws_info[1],
+             'assembly_name': 'assy1'})
+        ret = self.impl.run_QUAST_app(self.ctx, {'assemblies': [ref],
+                                                 'workspace_name': self.ws_info[1]})[0]
+        self.check_quast_app_output(ret, 315170, 315200, '6aae4f232d4d011210eca1965093c22d',
+                                    '2010dc270160ee661d76dad6051cda32')
+
     def fail_quast(self, params, error, exception=ValueError):
         with self.assertRaises(exception) as context:
             self.impl.run_QUAST(self.ctx, params)
         self.assertEqual(error, str(context.exception.message))
 
-    def check_quast_output(self, ret, minsize, maxsize, repttxtmd5, icarusmd5):
+    def check_quast_app_output(self, ret, minsize, maxsize, repttxtmd5, icarusmd5):
+        filename = 'quast_results.zip'
+
+        ref = ret['report_ref']
+        objname = ret['report_name']
+        obj = self.dfu.get_objects(
+            {'object_refs': [ref]})['data'][0]
+        print obj
+        d = obj['data']
+        links = d['html_links']
+        self.assertEqual(len(links), 1)
+        hid = links[0]['handle']
+        shocknode = links[0]['URL'].split('/')[-1]
+        self.handles_to_delete.append(hid)
+        self.nodes_to_delete.append(shocknode)
+
+        self.assertEqual(objname, obj['info'][1])
+        rmd5 = hashlib.md5(d['text_message']).hexdigest()
+        self.assertEqual(rmd5, repttxtmd5)
+        self.assertEqual(links[0]['name'], 'report.html')
+        self.assertEqual(links[0]['description'], 'QUAST report output')
+
+        shockret = requests.get(self.shockURL + '/node/' + shocknode,
+                                headers={'Authorization': 'OAuth ' + self.token}).json()['data']
+        self.assertEqual(shockret['id'], shocknode)
+        shockfile = shockret['file']
+        self.assertEqual(shockfile['name'], filename)
+        self.assertGreater(shockfile['size'], minsize)  # zip file size & md5 not repeatable
+        self.assertLess(shockfile['size'], maxsize)
+
+        handleret = self.hs.hids_to_handles([hid])[0]
+        print handleret
+        self.assertEqual(handleret['url'], self.shockURL)
+        self.assertEqual(handleret['hid'], hid)
+#         self.assertEqual(handleret['file_name'], filename)  # KBR doesn't set
+        self.assertEqual(handleret['type'], 'shock')
+        self.assertEqual(handleret['id'], shocknode)
+        # KBR doesn't set
+#         self.assertEqual(handleret['remote_md5'], shockfile['checksum']['md5'])
+
+        # check data in shock
+        zipdir = os.path.join(self.WORKDIR, str(uuid.uuid4()))
+        self.dfu.shock_to_file(
+            {'shock_id': shocknode,
+             'unpack': 'unpack',
+             'file_path': os.path.join(zipdir, filename)
+             })
+        rmd5 = hashlib.md5(open(os.path.join(zipdir, 'report.txt'), 'rb')
+                           .read()).hexdigest()
+        self.assertEquals(rmd5, repttxtmd5)
+        imd5 = hashlib.md5(open(os.path.join(zipdir, 'icarus.html'), 'rb')
+                           .read()).hexdigest()
+        self.assertEquals(imd5, icarusmd5)
+
+    def check_quast_output(self, ret, minsize, maxsize, repttxtmd5, icarusmd5, no_handle=False):
         filename = 'quast_results.zip'
 
         shocknode = ret['shock_id']
         self.nodes_to_delete.append(shocknode)
-        self.handles_to_delete.append(ret['handle']['hid'])
+        if not no_handle:
+            self.handles_to_delete.append(ret['handle']['hid'])
         self.assertEqual(ret['node_file_name'], filename)
         self.assertGreater(ret['size'], minsize)  # zip file size & md5 not repeatable
         self.assertLess(ret['size'], maxsize)
@@ -251,20 +345,23 @@ class kb_quastTest(unittest.TestCase):
         shockfile = shockret['file']
         self.assertEqual(shockfile['name'], filename)
         self.assertEqual(shockfile['size'], ret['size'])
-        handle = ret['handle']
-        self.assertEqual(handle['url'], self.shockURL)
-        self.assertEqual(handle['file_name'], filename)
-        self.assertEqual(handle['type'], 'shock')
-        self.assertEqual(handle['id'], shocknode)
-        self.assertEqual(handle['remote_md5'], shockfile['checksum']['md5'])
-        hid = handle['hid']
-        handleret = self.hs.hids_to_handles([hid])[0]
-        self.assertEqual(handleret['url'], self.shockURL)
-        self.assertEqual(handleret['hid'], hid)
-        self.assertEqual(handleret['file_name'], filename)
-        self.assertEqual(handleret['type'], 'shock')
-        self.assertEqual(handleret['id'], shocknode)
-        self.assertEqual(handleret['remote_md5'], handle['remote_md5'])
+        if no_handle:
+            self.assertEqual(ret['handle'], None)
+        else:
+            handle = ret['handle']
+            self.assertEqual(handle['url'], self.shockURL)
+            self.assertEqual(handle['file_name'], filename)
+            self.assertEqual(handle['type'], 'shock')
+            self.assertEqual(handle['id'], shocknode)
+            self.assertEqual(handle['remote_md5'], shockfile['checksum']['md5'])
+            hid = handle['hid']
+            handleret = self.hs.hids_to_handles([hid])[0]
+            self.assertEqual(handleret['url'], self.shockURL)
+            self.assertEqual(handleret['hid'], hid)
+            self.assertEqual(handleret['file_name'], filename)
+            self.assertEqual(handleret['type'], 'shock')
+            self.assertEqual(handleret['id'], shocknode)
+            self.assertEqual(handleret['remote_md5'], handle['remote_md5'])
 
         # check data in shock
         zipdir = os.path.join(self.WORKDIR, str(uuid.uuid4()))

@@ -12,7 +12,9 @@ from DataFileUtil.baseclient import ServerError as _DFUError
 from AssemblyUtil.AssemblyUtilClient import AssemblyUtil as _AssClient
 from AssemblyUtil.baseclient import ServerError as _AssError
 from KBaseReport.KBaseReportClient import KBaseReport as _KBRepClient
+from KBaseReport.baseclient import ServerError as _RepError
 import psutil
+import uuid
 
 
 class ObjInfo(object):
@@ -51,7 +53,7 @@ stored in a zip file in Shock.
     ######################################### noqa
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/mrcreosote/kb_quast"
-    GIT_COMMIT_HASH = "449f6a5c981fc8958ca68017bf206321e9f39ac2"
+    GIT_COMMIT_HASH = "8ea076d3ed79b145c8d47a20c55843fb36095d6b"
 
     #BEGIN_CLASS_HEADER
 
@@ -149,17 +151,14 @@ stored in a zip file in Shock.
     def run_QUAST_app(self, ctx, params):
         """
         Run QUAST and save a KBaseReport with the output.
-        :param params: instance of type "QUASTParams" (Input for running
-           QUAST. assemblies - the list of assemblies upon which QUAST will
-           be run. -OR- files - the list of FASTA files upon which QUAST will
-           be run.) -> structure: parameter "assemblies" of list of type
-           "assembly_ref" (An X/Y/Z style reference to a workspace object
-           containing an assembly, either a KBaseGenomes.ContigSet or
-           KBaseGenomeAnnotations.Assembly.), parameter "files" of list of
-           type "FASTAFile" (A local FASTA file. path - the path to the FASTA
-           file. label - the label to use for the file in the QUAST output.
-           If missing, the file name will be used.) -> structure: parameter
-           "path" of String, parameter "label" of String
+        :param params: instance of type "QUASTAppParams" (Input for running
+           QUAST as a Narrative application. workspace_name - the name of the
+           workspace where the KBaseReport object will be saved. assemblies -
+           the list of assemblies upon which QUAST will be run.) ->
+           structure: parameter "workspace_name" of String, parameter
+           "assemblies" of list of type "assembly_ref" (An X/Y/Z style
+           reference to a workspace object containing an assembly, either a
+           KBaseGenomes.ContigSet or KBaseGenomeAnnotations.Assembly.)
         :returns: instance of type "QUASTAppOutput" (Output of the
            run_quast_app function. report_name - the name of the
            KBaseReport.Report workspace object. report_ref - the workspace
@@ -169,7 +168,37 @@ stored in a zip file in Shock.
         # ctx is the context object
         # return variables are: output
         #BEGIN run_QUAST_app
-        output = None
+        wsname = params.get('workspace_name')  # TODO take wsid when possible
+        if not wsname:
+            raise ValueError('No workspace name provided')
+        params['make_handle'] = 0
+        quastret = self.run_QUAST(ctx, params)[0]
+        with open(_os.path.join(quastret['quast_path'], 'report.txt')) as reportfile:
+            report = reportfile.read()
+        # TODO before release - use released version of KBR
+        kbr = _KBRepClient(self.callback_url, service_ver='dev')
+        self.log('Saving QUAST report')
+        try:
+            repout = kbr.create_extended_report(
+                {'message': report,
+                 'direct_html_link_index': 0,
+                 'html_links': [{'shock_id': quastret['shock_id'],
+                                 'name': 'report.html',
+                                 'description': 'QUAST report output'}
+                                ],
+                 'file_links': [],  # error from KBR otherwise
+                 'objects_created': [],  # same
+                 'report_object_name': 'kb_quast_report_' + str(uuid.uuid4()),
+                 'workspace_name': wsname
+                 })
+        except _RepError as re:
+            self.log('Logging exception from creating report object')
+            self.log(str(re))
+            # TODO delete shock node
+            raise
+        output = {'report_name': repout['name'],
+                  'report_ref': repout['ref']
+                  }
         #END run_QUAST_app
 
         # At some point might do deeper type checking...
@@ -185,31 +214,35 @@ stored in a zip file in Shock.
         :param params: instance of type "QUASTParams" (Input for running
            QUAST. assemblies - the list of assemblies upon which QUAST will
            be run. -OR- files - the list of FASTA files upon which QUAST will
-           be run.) -> structure: parameter "assemblies" of list of type
-           "assembly_ref" (An X/Y/Z style reference to a workspace object
-           containing an assembly, either a KBaseGenomes.ContigSet or
-           KBaseGenomeAnnotations.Assembly.), parameter "files" of list of
-           type "FASTAFile" (A local FASTA file. path - the path to the FASTA
-           file. label - the label to use for the file in the QUAST output.
-           If missing, the file name will be used.) -> structure: parameter
-           "path" of String, parameter "label" of String
+           be run. Optional arguments: make_handle - create a handle for the
+           new shock node for the report.) -> structure: parameter
+           "assemblies" of list of type "assembly_ref" (An X/Y/Z style
+           reference to a workspace object containing an assembly, either a
+           KBaseGenomes.ContigSet or KBaseGenomeAnnotations.Assembly.),
+           parameter "files" of list of type "FASTAFile" (A local FASTA file.
+           path - the path to the FASTA file. label - the label to use for
+           the file in the QUAST output. If missing, the file name will be
+           used.) -> structure: parameter "path" of String, parameter "label"
+           of String, parameter "make_handle" of type "boolean" (A boolean -
+           0 for false, 1 for true. @range (0, 1))
         :returns: instance of type "QUASTOutput" (Ouput of the run_quast
            function. shock_id - the id of the shock node where the zipped
            QUAST output is stored. handle - the new handle for the shock
-           node. node_file_name - the name of the file stored in Shock. size
-           - the size of the file stored in shock. quast_path - the directory
-           containing the quast output and the zipfile of the directory.) ->
-           structure: parameter "shock_id" of String, parameter "handle" of
-           type "Handle" (A handle for a file stored in Shock. hid - the id
-           of the handle in the Handle Service that references this shock
-           node id - the id for the shock node url - the url of the shock
-           server type - the type of the handle. This should always be shock.
-           file_name - the name of the file remote_md5 - the md5 digest of
-           the file.) -> structure: parameter "hid" of String, parameter
-           "file_name" of String, parameter "id" of String, parameter "url"
-           of String, parameter "type" of String, parameter "remote_md5" of
-           String, parameter "node_file_name" of String, parameter "size" of
-           String, parameter "quast_path" of String
+           node, if created. node_file_name - the name of the file stored in
+           Shock. size - the size of the file stored in shock. quast_path -
+           the directory containing the quast output and the zipfile of the
+           directory.) -> structure: parameter "shock_id" of String,
+           parameter "handle" of type "Handle" (A handle for a file stored in
+           Shock. hid - the id of the handle in the Handle Service that
+           references this shock node id - the id for the shock node url -
+           the url of the shock server type - the type of the handle. This
+           should always be shock. file_name - the name of the file
+           remote_md5 - the md5 digest of the file.) -> structure: parameter
+           "hid" of String, parameter "file_name" of String, parameter "id"
+           of String, parameter "url" of String, parameter "type" of String,
+           parameter "remote_md5" of String, parameter "node_file_name" of
+           String, parameter "size" of String, parameter "quast_path" of
+           String
         """
         # ctx is the context object
         # return variables are: output
@@ -248,7 +281,10 @@ stored in a zip file in Shock.
         self.run_quast_exec(out, filepaths, labels)
         dfu = _DFUClient(self.callback_url)
         try:
-            output = dfu.file_to_shock({'file_path': out, 'make_handle': 1, 'pack': 'zip'})
+            mh = params.get('make_handle')
+            output = dfu.file_to_shock({'file_path': out,
+                                        'make_handle': 1 if mh else 0,
+                                        'pack': 'zip'})
         except _DFUError as dfue:
             # not really any way to test this block
             self.log('Logging exception loading results to shock')

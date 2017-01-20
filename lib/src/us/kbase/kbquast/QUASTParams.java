@@ -19,6 +19,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * assemblies - the list of assemblies upon which QUAST will be run.
  * -OR-
  * files - the list of FASTA files upon which QUAST will be run.
+ * Optional arguments:
+ * make_handle - create a handle for the new shock node for the report.
  * </pre>
  * 
  */
@@ -26,7 +28,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @Generated("com.googlecode.jsonschema2pojo")
 @JsonPropertyOrder({
     "assemblies",
-    "files"
+    "files",
+    "make_handle"
 })
 public class QUASTParams {
 
@@ -34,6 +37,8 @@ public class QUASTParams {
     private List<String> assemblies;
     @JsonProperty("files")
     private List<FASTAFile> files;
+    @JsonProperty("make_handle")
+    private Long makeHandle;
     private Map<java.lang.String, Object> additionalProperties = new HashMap<java.lang.String, Object>();
 
     @JsonProperty("assemblies")
@@ -66,6 +71,21 @@ public class QUASTParams {
         return this;
     }
 
+    @JsonProperty("make_handle")
+    public Long getMakeHandle() {
+        return makeHandle;
+    }
+
+    @JsonProperty("make_handle")
+    public void setMakeHandle(Long makeHandle) {
+        this.makeHandle = makeHandle;
+    }
+
+    public QUASTParams withMakeHandle(Long makeHandle) {
+        this.makeHandle = makeHandle;
+        return this;
+    }
+
     @JsonAnyGetter
     public Map<java.lang.String, Object> getAdditionalProperties() {
         return this.additionalProperties;
@@ -78,7 +98,7 @@ public class QUASTParams {
 
     @Override
     public java.lang.String toString() {
-        return ((((((("QUASTParams"+" [assemblies=")+ assemblies)+", files=")+ files)+", additionalProperties=")+ additionalProperties)+"]");
+        return ((((((((("QUASTParams"+" [assemblies=")+ assemblies)+", files=")+ files)+", makeHandle=")+ makeHandle)+", additionalProperties=")+ additionalProperties)+"]");
     }
 
 }

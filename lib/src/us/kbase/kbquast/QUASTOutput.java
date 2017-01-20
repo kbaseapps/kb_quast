@@ -16,7 +16,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * <pre>
  * Ouput of the run_quast function.
  * shock_id - the id of the shock node where the zipped QUAST output is stored.
- * handle - the new handle for the shock node.
+ * handle - the new handle for the shock node, if created.
  * node_file_name - the name of the file stored in Shock.
  * size - the size of the file stored in shock.
  * quast_path - the directory containing the quast output and the zipfile of the directory.

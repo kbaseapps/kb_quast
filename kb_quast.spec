@@ -5,6 +5,11 @@ stored in a zip file in Shock.
 
 module kb_quast {
 
+	/* A boolean - 0 for false, 1 for true.
+		@range (0, 1)
+	*/
+	typedef int boolean;
+
 	/* An X/Y/Z style reference to a workspace object containing an assembly, either a
 		KBaseGenomes.ContigSet or KBaseGenomeAnnotations.Assembly.
 	*/
@@ -37,15 +42,14 @@ module kb_quast {
 		string label;
 	} FASTAFile;
 
-	/* Input for running QUAST.
+	/* Input for running QUAST as a Narrative application.
+		workspace_name - the name of the workspace where the KBaseReport object will be saved.
 		assemblies - the list of assemblies upon which QUAST will be run.
-		-OR-
-		files - the list of FASTA files upon which QUAST will be run.
 	*/
 	typedef structure {
+		string workspace_name;
 		list<assembly_ref> assemblies;
-		list<FASTAFile> files;
-	} QUASTParams;
+	} QUASTAppParams;
 	
 	/* Output of the run_quast_app function.
 		report_name - the name of the KBaseReport.Report workspace object.
@@ -57,12 +61,26 @@ module kb_quast {
 	} QUASTAppOutput;
 
 	/* Run QUAST and save a KBaseReport with the output. */
-	funcdef run_QUAST_app(QUASTParams params) returns(QUASTAppOutput output)
+	funcdef run_QUAST_app(QUASTAppParams params) returns(QUASTAppOutput output)
 		authentication required;
+	
+	/* Input for running QUAST.
+		assemblies - the list of assemblies upon which QUAST will be run.
+		-OR-
+		files - the list of FASTA files upon which QUAST will be run.
 		
+		Optional arguments:
+		make_handle - create a handle for the new shock node for the report.
+	*/
+	typedef structure {
+		list<assembly_ref> assemblies;
+		list<FASTAFile> files;
+		boolean make_handle;
+	} QUASTParams;
+	
 	/* Ouput of the run_quast function.
 		shock_id - the id of the shock node where the zipped QUAST output is stored.
-		handle - the new handle for the shock node.
+		handle - the new handle for the shock node, if created.
 		node_file_name - the name of the file stored in Shock.
 		size - the size of the file stored in shock.
 		quast_path - the directory containing the quast output and the zipfile of the directory.

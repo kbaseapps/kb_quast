@@ -121,15 +121,12 @@ sub new
 =begin html
 
 <pre>
-$params is a kb_quast.QUASTParams
+$params is a kb_quast.QUASTAppParams
 $output is a kb_quast.QUASTAppOutput
-QUASTParams is a reference to a hash where the following keys are defined:
+QUASTAppParams is a reference to a hash where the following keys are defined:
+	workspace_name has a value which is a string
 	assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
-	files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
 assembly_ref is a string
-FASTAFile is a reference to a hash where the following keys are defined:
-	path has a value which is a string
-	label has a value which is a string
 QUASTAppOutput is a reference to a hash where the following keys are defined:
 	report_name has a value which is a string
 	report_ref has a value which is a string
@@ -140,15 +137,12 @@ QUASTAppOutput is a reference to a hash where the following keys are defined:
 
 =begin text
 
-$params is a kb_quast.QUASTParams
+$params is a kb_quast.QUASTAppParams
 $output is a kb_quast.QUASTAppOutput
-QUASTParams is a reference to a hash where the following keys are defined:
+QUASTAppParams is a reference to a hash where the following keys are defined:
+	workspace_name has a value which is a string
 	assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
-	files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
 assembly_ref is a string
-FASTAFile is a reference to a hash where the following keys are defined:
-	path has a value which is a string
-	label has a value which is a string
 QUASTAppOutput is a reference to a hash where the following keys are defined:
 	report_name has a value which is a string
 	report_ref has a value which is a string
@@ -228,10 +222,12 @@ $output is a kb_quast.QUASTOutput
 QUASTParams is a reference to a hash where the following keys are defined:
 	assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
 	files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
+	make_handle has a value which is a kb_quast.boolean
 assembly_ref is a string
 FASTAFile is a reference to a hash where the following keys are defined:
 	path has a value which is a string
 	label has a value which is a string
+boolean is an int
 QUASTOutput is a reference to a hash where the following keys are defined:
 	shock_id has a value which is a string
 	handle has a value which is a kb_quast.Handle
@@ -257,10 +253,12 @@ $output is a kb_quast.QUASTOutput
 QUASTParams is a reference to a hash where the following keys are defined:
 	assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
 	files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
+	make_handle has a value which is a kb_quast.boolean
 assembly_ref is a string
 FASTAFile is a reference to a hash where the following keys are defined:
 	path has a value which is a string
 	label has a value which is a string
+boolean is an int
 QUASTOutput is a reference to a hash where the following keys are defined:
 	shock_id has a value which is a string
 	handle has a value which is a kb_quast.Handle
@@ -421,6 +419,38 @@ sub _validate_version {
 
 
 
+=head2 boolean
+
+=over 4
+
+
+
+=item Description
+
+A boolean - 0 for false, 1 for true.
+@range (0, 1)
+
+
+=item Definition
+
+=begin html
+
+<pre>
+an int
+</pre>
+
+=end html
+
+=begin text
+
+an int
+
+=end text
+
+=back
+
+
+
 =head2 assembly_ref
 
 =over 4
@@ -544,7 +574,7 @@ label has a value which is a string
 
 
 
-=head2 QUASTParams
+=head2 QUASTAppParams
 
 =over 4
 
@@ -552,10 +582,9 @@ label has a value which is a string
 
 =item Description
 
-Input for running QUAST.
+Input for running QUAST as a Narrative application.
+workspace_name - the name of the workspace where the KBaseReport object will be saved.
 assemblies - the list of assemblies upon which QUAST will be run.
--OR-
-files - the list of FASTA files upon which QUAST will be run.
 
 
 =item Definition
@@ -564,8 +593,8 @@ files - the list of FASTA files upon which QUAST will be run.
 
 <pre>
 a reference to a hash where the following keys are defined:
+workspace_name has a value which is a string
 assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
-files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
 
 </pre>
 
@@ -574,8 +603,8 @@ files has a value which is a reference to a list where each element is a kb_quas
 =begin text
 
 a reference to a hash where the following keys are defined:
+workspace_name has a value which is a string
 assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
-files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
 
 
 =end text
@@ -623,6 +652,51 @@ report_ref has a value which is a string
 
 
 
+=head2 QUASTParams
+
+=over 4
+
+
+
+=item Description
+
+Input for running QUAST.
+assemblies - the list of assemblies upon which QUAST will be run.
+-OR-
+files - the list of FASTA files upon which QUAST will be run.
+
+Optional arguments:
+make_handle - create a handle for the new shock node for the report.
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
+files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
+make_handle has a value which is a kb_quast.boolean
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
+files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
+make_handle has a value which is a kb_quast.boolean
+
+
+=end text
+
+=back
+
+
+
 =head2 QUASTOutput
 
 =over 4
@@ -633,7 +707,7 @@ report_ref has a value which is a string
 
 Ouput of the run_quast function.
 shock_id - the id of the shock node where the zipped QUAST output is stored.
-handle - the new handle for the shock node.
+handle - the new handle for the shock node, if created.
 node_file_name - the name of the file stored in Shock.
 size - the size of the file stored in shock.
 quast_path - the directory containing the quast output and the zipfile of the directory.
