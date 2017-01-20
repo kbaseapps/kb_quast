@@ -171,6 +171,7 @@ stored in a zip file in Shock.
         wsname = params.get('workspace_name')  # TODO take wsid when possible
         if not wsname:
             raise ValueError('No workspace name provided')
+        params['make_handle'] = 0
         quastret = self.run_QUAST(ctx, params)[0]
         with open(_os.path.join(quastret['quast_path'], 'report.txt')) as reportfile:
             report = reportfile.read()
@@ -280,7 +281,10 @@ stored in a zip file in Shock.
         self.run_quast_exec(out, filepaths, labels)
         dfu = _DFUClient(self.callback_url)
         try:
-            output = dfu.file_to_shock({'file_path': out, 'make_handle': 1, 'pack': 'zip'})
+            mh = params.get('make_handle')
+            output = dfu.file_to_shock({'file_path': out,
+                                        'make_handle': 1 if mh else 0,
+                                        'pack': 'zip'})
         except _DFUError as dfue:
             # not really any way to test this block
             self.log('Logging exception loading results to shock')
