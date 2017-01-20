@@ -222,10 +222,12 @@ $output is a kb_quast.QUASTOutput
 QUASTParams is a reference to a hash where the following keys are defined:
 	assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
 	files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
+	make_handle has a value which is a kb_quast.boolean
 assembly_ref is a string
 FASTAFile is a reference to a hash where the following keys are defined:
 	path has a value which is a string
 	label has a value which is a string
+boolean is an int
 QUASTOutput is a reference to a hash where the following keys are defined:
 	shock_id has a value which is a string
 	handle has a value which is a kb_quast.Handle
@@ -251,10 +253,12 @@ $output is a kb_quast.QUASTOutput
 QUASTParams is a reference to a hash where the following keys are defined:
 	assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
 	files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
+	make_handle has a value which is a kb_quast.boolean
 assembly_ref is a string
 FASTAFile is a reference to a hash where the following keys are defined:
 	path has a value which is a string
 	label has a value which is a string
+boolean is an int
 QUASTOutput is a reference to a hash where the following keys are defined:
 	shock_id has a value which is a string
 	handle has a value which is a kb_quast.Handle
@@ -412,6 +416,38 @@ sub _validate_version {
 }
 
 =head1 TYPES
+
+
+
+=head2 boolean
+
+=over 4
+
+
+
+=item Description
+
+A boolean - 0 for false, 1 for true.
+@range (0, 1)
+
+
+=item Definition
+
+=begin html
+
+<pre>
+an int
+</pre>
+
+=end html
+
+=begin text
+
+an int
+
+=end text
+
+=back
 
 
 
@@ -629,6 +665,9 @@ assemblies - the list of assemblies upon which QUAST will be run.
 -OR-
 files - the list of FASTA files upon which QUAST will be run.
 
+Optional arguments:
+make_handle - create a handle for the new shock node for the report.
+
 
 =item Definition
 
@@ -638,6 +677,7 @@ files - the list of FASTA files upon which QUAST will be run.
 a reference to a hash where the following keys are defined:
 assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
 files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
+make_handle has a value which is a kb_quast.boolean
 
 </pre>
 
@@ -648,6 +688,7 @@ files has a value which is a reference to a list where each element is a kb_quas
 a reference to a hash where the following keys are defined:
 assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
 files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
+make_handle has a value which is a kb_quast.boolean
 
 
 =end text
@@ -666,7 +707,7 @@ files has a value which is a reference to a list where each element is a kb_quas
 
 Ouput of the run_quast function.
 shock_id - the id of the shock node where the zipped QUAST output is stored.
-handle - the new handle for the shock node.
+handle - the new handle for the shock node, if created.
 node_file_name - the name of the file stored in Shock.
 size - the size of the file stored in shock.
 quast_path - the directory containing the quast output and the zipfile of the directory.

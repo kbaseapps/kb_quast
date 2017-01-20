@@ -5,6 +5,11 @@ stored in a zip file in Shock.
 
 module kb_quast {
 
+	/* A boolean - 0 for false, 1 for true.
+		@range (0, 1)
+	*/
+	typedef int boolean;
+
 	/* An X/Y/Z style reference to a workspace object containing an assembly, either a
 		KBaseGenomes.ContigSet or KBaseGenomeAnnotations.Assembly.
 	*/
@@ -63,15 +68,19 @@ module kb_quast {
 		assemblies - the list of assemblies upon which QUAST will be run.
 		-OR-
 		files - the list of FASTA files upon which QUAST will be run.
+		
+		Optional arguments:
+		make_handle - create a handle for the new shock node for the report.
 	*/
 	typedef structure {
 		list<assembly_ref> assemblies;
 		list<FASTAFile> files;
+		boolean make_handle;
 	} QUASTParams;
 	
 	/* Ouput of the run_quast function.
 		shock_id - the id of the shock node where the zipped QUAST output is stored.
-		handle - the new handle for the shock node.
+		handle - the new handle for the shock node, if created.
 		node_file_name - the name of the file stored in Shock.
 		size - the size of the file stored in shock.
 		quast_path - the directory containing the quast output and the zipfile of the directory.

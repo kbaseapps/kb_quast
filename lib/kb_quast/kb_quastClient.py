@@ -60,31 +60,35 @@ class kb_quast(object):
         :param params: instance of type "QUASTParams" (Input for running
            QUAST. assemblies - the list of assemblies upon which QUAST will
            be run. -OR- files - the list of FASTA files upon which QUAST will
-           be run.) -> structure: parameter "assemblies" of list of type
-           "assembly_ref" (An X/Y/Z style reference to a workspace object
-           containing an assembly, either a KBaseGenomes.ContigSet or
-           KBaseGenomeAnnotations.Assembly.), parameter "files" of list of
-           type "FASTAFile" (A local FASTA file. path - the path to the FASTA
-           file. label - the label to use for the file in the QUAST output.
-           If missing, the file name will be used.) -> structure: parameter
-           "path" of String, parameter "label" of String
+           be run. Optional arguments: make_handle - create a handle for the
+           new shock node for the report.) -> structure: parameter
+           "assemblies" of list of type "assembly_ref" (An X/Y/Z style
+           reference to a workspace object containing an assembly, either a
+           KBaseGenomes.ContigSet or KBaseGenomeAnnotations.Assembly.),
+           parameter "files" of list of type "FASTAFile" (A local FASTA file.
+           path - the path to the FASTA file. label - the label to use for
+           the file in the QUAST output. If missing, the file name will be
+           used.) -> structure: parameter "path" of String, parameter "label"
+           of String, parameter "make_handle" of type "boolean" (A boolean -
+           0 for false, 1 for true. @range (0, 1))
         :returns: instance of type "QUASTOutput" (Ouput of the run_quast
            function. shock_id - the id of the shock node where the zipped
            QUAST output is stored. handle - the new handle for the shock
-           node. node_file_name - the name of the file stored in Shock. size
-           - the size of the file stored in shock. quast_path - the directory
-           containing the quast output and the zipfile of the directory.) ->
-           structure: parameter "shock_id" of String, parameter "handle" of
-           type "Handle" (A handle for a file stored in Shock. hid - the id
-           of the handle in the Handle Service that references this shock
-           node id - the id for the shock node url - the url of the shock
-           server type - the type of the handle. This should always be shock.
-           file_name - the name of the file remote_md5 - the md5 digest of
-           the file.) -> structure: parameter "hid" of String, parameter
-           "file_name" of String, parameter "id" of String, parameter "url"
-           of String, parameter "type" of String, parameter "remote_md5" of
-           String, parameter "node_file_name" of String, parameter "size" of
-           String, parameter "quast_path" of String
+           node, if created. node_file_name - the name of the file stored in
+           Shock. size - the size of the file stored in shock. quast_path -
+           the directory containing the quast output and the zipfile of the
+           directory.) -> structure: parameter "shock_id" of String,
+           parameter "handle" of type "Handle" (A handle for a file stored in
+           Shock. hid - the id of the handle in the Handle Service that
+           references this shock node id - the id for the shock node url -
+           the url of the shock server type - the type of the handle. This
+           should always be shock. file_name - the name of the file
+           remote_md5 - the md5 digest of the file.) -> structure: parameter
+           "hid" of String, parameter "file_name" of String, parameter "id"
+           of String, parameter "url" of String, parameter "type" of String,
+           parameter "remote_md5" of String, parameter "node_file_name" of
+           String, parameter "size" of String, parameter "quast_path" of
+           String
         """
         return self._client.call_method(
             'kb_quast.run_QUAST',
