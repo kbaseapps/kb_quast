@@ -1,0 +1,16 @@
+{
+    "name" : "Run QUAST.",
+    "short_description" : "Run QUAST on a set of assemblies.",
+    "long_description" : "Runs on a set of assemblies provided as local FASTA files or workspace objects.",
+    "tags" : {
+        "categories" : ["QUAST", "FASTA"],
+        "input": {
+            "file_types": ["FASTA"],
+            "kb_types": ["KBaseGenomes.ContigSet", "KBaseGenomeAnnotations.Assembly"]
+        },
+        "output": {
+            "file_types": [],
+            "kb_types": []
+        }
+    }
+}
