@@ -1,0 +1,42 @@
+name     : Run QUAST
+subtitle : none
+tooltip  : Runs QUAST on a set of assemblies.
+
+screenshots :
+    []
+
+suggestions :
+    apps:
+        related :
+            []
+        next :
+            []
+    methods:
+        related :
+            []
+        next :
+            []
+
+parameters :
+    assemblies :
+        ui-name : Assemblies
+        short-hint : Assembly objects to be analyzed by QUAST.
+
+description : |
+    <p>
+    This is a KBase wrapper for version 4.4 of the 
+    <a href="http://quast.sourceforge.net/" target="_blank">QUAST</a> 
+    assembly quality assessment tool. 
+    </p>
+
+publications: 
+    -
+        display-text: |
+            Alexey Gurevich, Vladislav Saveliev, Nikolay Vyahhi and Glenn Tesler, QUAST: quality assessment tool for genome assemblies, Bioinformatics (2013) 29 (8): 1072-1075. doi: 10.1093/bioinformatics/btt086 First published online: February 19, 2013
+        link: https://www.ncbi.nlm.nih.gov/pubmed/23422339
+        pmid: 23422339
+    -
+        display-test: |
+            Alla Mikheenko, Gleb Valin, Andrey Prjibelski, Vladislav Saveliev, Alexey Gurevich, Icarus: visualizer for de novo assembly evaluation, Bioinformatics (2016). doi: 10.1093/bioinformatics/btw379 First published online: July 4, 2016
+        link: https://www.ncbi.nlm.nih.gov/pubmed/27378299
+        pmid: 27378299

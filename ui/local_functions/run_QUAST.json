@@ -1,7 +1,7 @@
 {
     "name" : "Run QUAST.",
     "short_description" : "Run QUAST on a set of assemblies.",
-    "long_description" : "Runs on a set of assemblies provided as local FASTA files or workspace objects.",
+    "long_description" : "Runs on a set of assemblies provided as local FASTA files or references to workspace objects.",
     "tags" : {
         "categories" : ["QUAST", "FASTA"],
         "input": {
