@@ -2,7 +2,7 @@ module-name:
     kb_quast
 
 module-description: |
-    Wrapper for [QUAST](http://quast.sourceforge.net/).
+    Wrapper for QUAST (http://quast.sourceforge.net/).
 
     From the QUAST site: QUAST stands for QUality ASsessment Tool. The tool evaluates genome 
     assemblies by computing various metrics. 
