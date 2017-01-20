@@ -94,8 +94,8 @@ class kb_quastTest(unittest.TestCase):
         print('Deleted shock node ' + node_id)
 
     def start_test(self):
-        test_name = inspect.stack()[1][3]
-        print('\n*** starting test: ' + test_name + ' **')
+        testname = inspect.stack()[1][3]
+        print('\n*** starting test: ' + testname + ' **')
 
 
 # ***** quast as local method tests ************************
@@ -253,6 +253,8 @@ class kb_quastTest(unittest.TestCase):
 
 # ****** test quast app tests *******************************
 
+    # TODO unhappy path tests
+
     def test_quast_app(self):
         # only one happy path through the run_QUAST_app code
         self.start_test()
@@ -265,7 +267,7 @@ class kb_quastTest(unittest.TestCase):
              'assembly_name': 'assy1'})
         ret = self.impl.run_QUAST_app(self.ctx, {'assemblies': [ref],
                                                  'workspace_name': self.ws_info[1]})[0]
-        self.check_quast_app_output(ret, 315180, 315200, '6aae4f232d4d011210eca1965093c22d',
+        self.check_quast_app_output(ret, 315170, 315200, '6aae4f232d4d011210eca1965093c22d',
                                     '2010dc270160ee661d76dad6051cda32')
 
     def fail_quast(self, params, error, exception=ValueError):
@@ -273,13 +275,59 @@ class kb_quastTest(unittest.TestCase):
             self.impl.run_QUAST(self.ctx, params)
         self.assertEqual(error, str(context.exception.message))
 
-    def check_quast_app_output(self, ret, minsize, maxsize, reptxtmd5, icarusmd5):
+    def check_quast_app_output(self, ret, minsize, maxsize, repttxtmd5, icarusmd5):
+        filename = 'quast_results.zip'
+
         ref = ret['report_ref']
         objname = ret['report_name']
         obj = self.dfu.get_objects(
             {'object_refs': [ref]})['data'][0]
         print obj
+        d = obj['data']
+        links = d['html_links']
+        self.assertEqual(len(links), 1)
+        hid = links[0]['handle']
+        shocknode = links[0]['URL'].split('/')[-1]
+        self.handles_to_delete.append(hid)
+        self.nodes_to_delete.append(shocknode)
+
         self.assertEqual(objname, obj['info'][1])
+        rmd5 = hashlib.md5(d['text_message']).hexdigest()
+        self.assertEqual(rmd5, repttxtmd5)
+        self.assertEqual(links[0]['name'], 'report.html')
+        self.assertEqual(links[0]['description'], 'QUAST report output')
+
+        shockret = requests.get(self.shockURL + '/node/' + shocknode,
+                                headers={'Authorization': 'OAuth ' + self.token}).json()['data']
+        self.assertEqual(shockret['id'], shocknode)
+        shockfile = shockret['file']
+        self.assertEqual(shockfile['name'], filename)
+        self.assertGreater(shockfile['size'], minsize)  # zip file size & md5 not repeatable
+        self.assertLess(shockfile['size'], maxsize)
+
+        handleret = self.hs.hids_to_handles([hid])[0]
+        print handleret
+        self.assertEqual(handleret['url'], self.shockURL)
+        self.assertEqual(handleret['hid'], hid)
+#         self.assertEqual(handleret['file_name'], filename)  # KBR doesn't set
+        self.assertEqual(handleret['type'], 'shock')
+        self.assertEqual(handleret['id'], shocknode)
+        # KBR doesn't set
+#         self.assertEqual(handleret['remote_md5'], shockfile['checksum']['md5'])
+
+        # check data in shock
+        zipdir = os.path.join(self.WORKDIR, str(uuid.uuid4()))
+        self.dfu.shock_to_file(
+            {'shock_id': shocknode,
+             'unpack': 'unpack',
+             'file_path': os.path.join(zipdir, filename)
+             })
+        rmd5 = hashlib.md5(open(os.path.join(zipdir, 'report.txt'), 'rb')
+                           .read()).hexdigest()
+        self.assertEquals(rmd5, repttxtmd5)
+        imd5 = hashlib.md5(open(os.path.join(zipdir, 'icarus.html'), 'rb')
+                           .read()).hexdigest()
+        self.assertEquals(imd5, icarusmd5)
 
     def check_quast_output(self, ret, minsize, maxsize, repttxtmd5, icarusmd5, no_handle=False):
         filename = 'quast_results.zip'
