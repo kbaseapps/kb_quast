@@ -110,6 +110,19 @@ class kb_quastTest(unittest.TestCase):
         self.check_quast_output(ret, 315250, 315280, '51b78e4ff2ff7a2f864769ff02d95f92',
                                 'dff937c5ed36a38345d057ea0b5c3e9e')
 
+    def test_quast_no_handle(self):
+        self.start_test()
+        ret = self.impl.run_QUAST(self.ctx, {'files': [
+            {'path': 'data/greengenes_UnAligSeq24606.fa', 'label': 'foobar'}],
+                                             'make_handle': 0})[0]
+        self.check_quast_output(ret, 315250, 315280, '51b78e4ff2ff7a2f864769ff02d95f92',
+                                'dff937c5ed36a38345d057ea0b5c3e9e', no_handle=True)
+
+        ret = self.impl.run_QUAST(self.ctx, {'files': [
+            {'path': 'data/greengenes_UnAligSeq24606.fa', 'label': 'foobar'}]})[0]
+        self.check_quast_output(ret, 315250, 315280, '51b78e4ff2ff7a2f864769ff02d95f92',
+                                'dff937c5ed36a38345d057ea0b5c3e9e', no_handle=True)
+
     def test_quast_from_2_files(self):
         self.start_test()
         ret = self.impl.run_QUAST(self.ctx, {'files': [
@@ -268,12 +281,13 @@ class kb_quastTest(unittest.TestCase):
         print obj
         self.assertEqual(objname, obj['info'][1])
 
-    def check_quast_output(self, ret, minsize, maxsize, repttxtmd5, icarusmd5):
+    def check_quast_output(self, ret, minsize, maxsize, repttxtmd5, icarusmd5, no_handle=False):
         filename = 'quast_results.zip'
 
         shocknode = ret['shock_id']
         self.nodes_to_delete.append(shocknode)
-        self.handles_to_delete.append(ret['handle']['hid'])
+        if not no_handle:
+            self.handles_to_delete.append(ret['handle']['hid'])
         self.assertEqual(ret['node_file_name'], filename)
         self.assertGreater(ret['size'], minsize)  # zip file size & md5 not repeatable
         self.assertLess(ret['size'], maxsize)
@@ -283,20 +297,23 @@ class kb_quastTest(unittest.TestCase):
         shockfile = shockret['file']
         self.assertEqual(shockfile['name'], filename)
         self.assertEqual(shockfile['size'], ret['size'])
-        handle = ret['handle']
-        self.assertEqual(handle['url'], self.shockURL)
-        self.assertEqual(handle['file_name'], filename)
-        self.assertEqual(handle['type'], 'shock')
-        self.assertEqual(handle['id'], shocknode)
-        self.assertEqual(handle['remote_md5'], shockfile['checksum']['md5'])
-        hid = handle['hid']
-        handleret = self.hs.hids_to_handles([hid])[0]
-        self.assertEqual(handleret['url'], self.shockURL)
-        self.assertEqual(handleret['hid'], hid)
-        self.assertEqual(handleret['file_name'], filename)
-        self.assertEqual(handleret['type'], 'shock')
-        self.assertEqual(handleret['id'], shocknode)
-        self.assertEqual(handleret['remote_md5'], handle['remote_md5'])
+        if no_handle:
+            self.assertEqual(ret['handle'], None)
+        else:
+            handle = ret['handle']
+            self.assertEqual(handle['url'], self.shockURL)
+            self.assertEqual(handle['file_name'], filename)
+            self.assertEqual(handle['type'], 'shock')
+            self.assertEqual(handle['id'], shocknode)
+            self.assertEqual(handle['remote_md5'], shockfile['checksum']['md5'])
+            hid = handle['hid']
+            handleret = self.hs.hids_to_handles([hid])[0]
+            self.assertEqual(handleret['url'], self.shockURL)
+            self.assertEqual(handleret['hid'], hid)
+            self.assertEqual(handleret['file_name'], filename)
+            self.assertEqual(handleret['type'], 'shock')
+            self.assertEqual(handleret['id'], shocknode)
+            self.assertEqual(handleret['remote_md5'], handle['remote_md5'])
 
         # check data in shock
         zipdir = os.path.join(self.WORKDIR, str(uuid.uuid4()))
