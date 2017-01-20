@@ -97,6 +97,9 @@ class kb_quastTest(unittest.TestCase):
         test_name = inspect.stack()[1][3]
         print('\n*** starting test: ' + test_name + ' **')
 
+
+# ***** quast as local method tests ************************
+
     def test_quast_from_1_file(self):
         self.start_test()
         ret = self.impl.run_QUAST(self.ctx, {'files': [
@@ -109,7 +112,7 @@ class kb_quastTest(unittest.TestCase):
         ret = self.impl.run_QUAST(self.ctx, {'files': [
             {'path': 'data/greengenes_UnAligSeq24606.fa', 'label': 'foo'},
             {'path': 'data/greengenes_UnAligSeq24606_edit1.fa'}]})[0]
-        self.check_quast_output(ret, 324690, 324730, 'b45307b9bed53de2fa0d0b9780be3faf',
+        self.check_quast_output(ret, 324690, 324740, 'b45307b9bed53de2fa0d0b9780be3faf',
                                 '862913a9383b42d0f0fb95beb113296f')
 
     def test_quast_from_1_wsobj(self):
@@ -144,7 +147,7 @@ class kb_quastTest(unittest.TestCase):
              'assembly_name': 'JohnCleeseLust'})
 
         # test using names vs ids
-        objs = self.ws.get_object_info3({'objects': [{'ref': ref1}, {'ref', ref2}]})['infos']
+        objs = self.ws.get_object_info3({'objects': [{'ref': ref1}, {'ref': ref2}]})['infos']
         wsref1 = str(objs[0][7] + '/' + str(objs[0][1]))
         wsref2 = str(objs[1][7] + '/' + str(objs[1][1]))
 
@@ -231,10 +234,35 @@ class kb_quastTest(unittest.TestCase):
             {'assemblies': [ref1, wsref1]},
             'Duplicate objects detected in input')
 
+# ****** test quast app tests *******************************
+
+    def test_quast_app(self):
+        # only one happy path through the run_QUAST_app code
+        self.start_test()
+        tf = 'greengenes_UnAligSeq24606_edit1.fa'
+        target = os.path.join(self.scratch, tf)
+        shutil.copy('data/' + tf, target)
+        ref = self.au.save_assembly_from_fasta(
+            {'file': {'path': target},
+             'workspace_name': self.ws_info[1],
+             'assembly_name': 'assy1'})
+        ret = self.impl.run_QUAST_app(self.ctx, {'assemblies': [ref],
+                                                 'workspace_name': self.ws_info[1]})[0]
+        self.check_quast_app_output(ret, 315180, 315200, '6aae4f232d4d011210eca1965093c22d',
+                                    '2010dc270160ee661d76dad6051cda32')
+
     def fail_quast(self, params, error, exception=ValueError):
         with self.assertRaises(exception) as context:
             self.impl.run_QUAST(self.ctx, params)
         self.assertEqual(error, str(context.exception.message))
+
+    def check_quast_app_output(self, ret, minsize, maxsize, reptxtmd5, icarusmd5):
+        ref = ret['report_ref']
+        objname = ret['report_name']
+        obj = self.dfu.get_objects(
+            {'object_refs': [ref]})['data'][0]
+        print obj
+        self.assertEqual(objname, obj['info'][1])
 
     def check_quast_output(self, ret, minsize, maxsize, repttxtmd5, icarusmd5):
         filename = 'quast_results.zip'

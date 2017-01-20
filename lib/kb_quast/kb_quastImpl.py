@@ -12,7 +12,9 @@ from DataFileUtil.baseclient import ServerError as _DFUError
 from AssemblyUtil.AssemblyUtilClient import AssemblyUtil as _AssClient
 from AssemblyUtil.baseclient import ServerError as _AssError
 from KBaseReport.KBaseReportClient import KBaseReport as _KBRepClient
+from KBaseReport.baseclient import ServerError as _RepError
 import psutil
+import uuid
 
 
 class ObjInfo(object):
@@ -51,7 +53,7 @@ stored in a zip file in Shock.
     ######################################### noqa
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/mrcreosote/kb_quast"
-    GIT_COMMIT_HASH = "449f6a5c981fc8958ca68017bf206321e9f39ac2"
+    GIT_COMMIT_HASH = "db07a2349edf0f8ef0e6403210fc94b9f3429dc1"
 
     #BEGIN_CLASS_HEADER
 
@@ -149,17 +151,14 @@ stored in a zip file in Shock.
     def run_QUAST_app(self, ctx, params):
         """
         Run QUAST and save a KBaseReport with the output.
-        :param params: instance of type "QUASTParams" (Input for running
-           QUAST. assemblies - the list of assemblies upon which QUAST will
-           be run. -OR- files - the list of FASTA files upon which QUAST will
-           be run.) -> structure: parameter "assemblies" of list of type
-           "assembly_ref" (An X/Y/Z style reference to a workspace object
-           containing an assembly, either a KBaseGenomes.ContigSet or
-           KBaseGenomeAnnotations.Assembly.), parameter "files" of list of
-           type "FASTAFile" (A local FASTA file. path - the path to the FASTA
-           file. label - the label to use for the file in the QUAST output.
-           If missing, the file name will be used.) -> structure: parameter
-           "path" of String, parameter "label" of String
+        :param params: instance of type "QUASTAppParams" (Input for running
+           QUAST as a Narrative application. workspace_name - the name of the
+           workspace where the KBaseReport object will be saved. assemblies -
+           the list of assemblies upon which QUAST will be run.) ->
+           structure: parameter "workspace_name" of String, parameter
+           "assemblies" of list of type "assembly_ref" (An X/Y/Z style
+           reference to a workspace object containing an assembly, either a
+           KBaseGenomes.ContigSet or KBaseGenomeAnnotations.Assembly.)
         :returns: instance of type "QUASTAppOutput" (Output of the
            run_quast_app function. report_name - the name of the
            KBaseReport.Report workspace object. report_ref - the workspace
@@ -169,7 +168,36 @@ stored in a zip file in Shock.
         # ctx is the context object
         # return variables are: output
         #BEGIN run_QUAST_app
-        output = None
+        wsname = params.get('workspace_name')  # TODO take wsid when possible
+        if not wsname:
+            raise ValueError('No workspace name provided')
+        quastret = self.run_QUAST(ctx, params)[0]
+        with open(_os.path.join(quastret['quast_path'], 'report.txt')) as reportfile:
+            report = reportfile.read()
+        # TODO before release - use released version of KBR
+        kbr = _KBRepClient(self.callback_url, service_ver='dev')
+        self.log('Saving QUAST report')
+        try:
+            repout = kbr.create_extended_report(
+                {'message': report,
+                 'direct_html_link_index': 0,
+                 'html_links': [{'shock_id': quastret['shock_id'],
+                                 'name': 'report.html',
+                                 'description': 'QUAST report output'}
+                                ],
+                 'file_links': [],  # error from KBR otherwise
+                 'objects_created': [],  # same
+                 'report_object_name': 'kb_quast_report_' + str(uuid.uuid4()),
+                 'workspace_name': wsname
+                 })
+        except _RepError as re:
+            self.log('Logging exception from creating report object')
+            self.log(str(re))
+            # TODO delete shock node
+            raise
+        output = {'report_name': repout['name'],
+                  'report_ref': repout['ref']
+                  }
         #END run_QUAST_app
 
         # At some point might do deeper type checking...

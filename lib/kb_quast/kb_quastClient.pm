@@ -121,15 +121,12 @@ sub new
 =begin html
 
 <pre>
-$params is a kb_quast.QUASTParams
+$params is a kb_quast.QUASTAppParams
 $output is a kb_quast.QUASTAppOutput
-QUASTParams is a reference to a hash where the following keys are defined:
+QUASTAppParams is a reference to a hash where the following keys are defined:
+	workspace_name has a value which is a string
 	assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
-	files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
 assembly_ref is a string
-FASTAFile is a reference to a hash where the following keys are defined:
-	path has a value which is a string
-	label has a value which is a string
 QUASTAppOutput is a reference to a hash where the following keys are defined:
 	report_name has a value which is a string
 	report_ref has a value which is a string
@@ -140,15 +137,12 @@ QUASTAppOutput is a reference to a hash where the following keys are defined:
 
 =begin text
 
-$params is a kb_quast.QUASTParams
+$params is a kb_quast.QUASTAppParams
 $output is a kb_quast.QUASTAppOutput
-QUASTParams is a reference to a hash where the following keys are defined:
+QUASTAppParams is a reference to a hash where the following keys are defined:
+	workspace_name has a value which is a string
 	assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
-	files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
 assembly_ref is a string
-FASTAFile is a reference to a hash where the following keys are defined:
-	path has a value which is a string
-	label has a value which is a string
 QUASTAppOutput is a reference to a hash where the following keys are defined:
 	report_name has a value which is a string
 	report_ref has a value which is a string
@@ -544,7 +538,7 @@ label has a value which is a string
 
 
 
-=head2 QUASTParams
+=head2 QUASTAppParams
 
 =over 4
 
@@ -552,10 +546,9 @@ label has a value which is a string
 
 =item Description
 
-Input for running QUAST.
+Input for running QUAST as a Narrative application.
+workspace_name - the name of the workspace where the KBaseReport object will be saved.
 assemblies - the list of assemblies upon which QUAST will be run.
--OR-
-files - the list of FASTA files upon which QUAST will be run.
 
 
 =item Definition
@@ -564,8 +557,8 @@ files - the list of FASTA files upon which QUAST will be run.
 
 <pre>
 a reference to a hash where the following keys are defined:
+workspace_name has a value which is a string
 assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
-files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
 
 </pre>
 
@@ -574,8 +567,8 @@ files has a value which is a reference to a list where each element is a kb_quas
 =begin text
 
 a reference to a hash where the following keys are defined:
+workspace_name has a value which is a string
 assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
-files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
 
 
 =end text
@@ -615,6 +608,46 @@ report_ref has a value which is a string
 a reference to a hash where the following keys are defined:
 report_name has a value which is a string
 report_ref has a value which is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 QUASTParams
+
+=over 4
+
+
+
+=item Description
+
+Input for running QUAST.
+assemblies - the list of assemblies upon which QUAST will be run.
+-OR-
+files - the list of FASTA files upon which QUAST will be run.
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
+files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
+files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
 
 
 =end text

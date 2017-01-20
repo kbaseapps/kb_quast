@@ -37,15 +37,14 @@ module kb_quast {
 		string label;
 	} FASTAFile;
 
-	/* Input for running QUAST.
+	/* Input for running QUAST as a Narrative application.
+		workspace_name - the name of the workspace where the KBaseReport object will be saved.
 		assemblies - the list of assemblies upon which QUAST will be run.
-		-OR-
-		files - the list of FASTA files upon which QUAST will be run.
 	*/
 	typedef structure {
+		string workspace_name;
 		list<assembly_ref> assemblies;
-		list<FASTAFile> files;
-	} QUASTParams;
+	} QUASTAppParams;
 	
 	/* Output of the run_quast_app function.
 		report_name - the name of the KBaseReport.Report workspace object.
@@ -57,9 +56,19 @@ module kb_quast {
 	} QUASTAppOutput;
 
 	/* Run QUAST and save a KBaseReport with the output. */
-	funcdef run_QUAST_app(QUASTParams params) returns(QUASTAppOutput output)
+	funcdef run_QUAST_app(QUASTAppParams params) returns(QUASTAppOutput output)
 		authentication required;
-		
+	
+	/* Input for running QUAST.
+		assemblies - the list of assemblies upon which QUAST will be run.
+		-OR-
+		files - the list of FASTA files upon which QUAST will be run.
+	*/
+	typedef structure {
+		list<assembly_ref> assemblies;
+		list<FASTAFile> files;
+	} QUASTParams;
+	
 	/* Ouput of the run_quast function.
 		shock_id - the id of the shock node where the zipped QUAST output is stored.
 		handle - the new handle for the shock node.

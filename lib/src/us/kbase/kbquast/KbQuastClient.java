@@ -168,12 +168,12 @@ public class KbQuastClient {
      * <pre>
      * Run QUAST and save a KBaseReport with the output.
      * </pre>
-     * @param   params   instance of type {@link us.kbase.kbquast.QUASTParams QUASTParams}
+     * @param   params   instance of type {@link us.kbase.kbquast.QUASTAppParams QUASTAppParams}
      * @return   parameter "output" of type {@link us.kbase.kbquast.QUASTAppOutput QUASTAppOutput}
      * @throws IOException if an IO exception occurs
      * @throws JsonClientException if a JSON RPC exception occurs
      */
-    public QUASTAppOutput runQUASTApp(QUASTParams params, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
+    public QUASTAppOutput runQUASTApp(QUASTAppParams params, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
         List<Object> args = new ArrayList<Object>();
         args.add(params);
         TypeReference<List<QUASTAppOutput>> retType = new TypeReference<List<QUASTAppOutput>>() {};
