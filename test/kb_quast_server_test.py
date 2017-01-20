@@ -20,6 +20,7 @@ from AbstractHandle.AbstractHandleClient import AbstractHandle as HandleService
 from DataFileUtil.DataFileUtilClient import DataFileUtil
 from AssemblyUtil.AssemblyUtilClient import AssemblyUtil
 from AssemblyUtil.baseclient import ServerError as AssemblyError
+from KBaseReport.baseclient import ServerError as KBRError
 from kb_quast.kb_quastImpl import kb_quast
 from kb_quast.kb_quastServer import MethodContext
 
@@ -97,10 +98,7 @@ class kb_quastTest(unittest.TestCase):
         testname = inspect.stack()[1][3]
         print('\n*** starting test: ' + testname + ' **')
 
-
 # ***** quast as local method tests ************************
-
-    # TODO test without making a handle
 
     def test_quast_from_1_file(self):
         self.start_test()
@@ -253,8 +251,6 @@ class kb_quastTest(unittest.TestCase):
 
 # ****** test quast app tests *******************************
 
-    # TODO unhappy path tests
-
     def test_quast_app(self):
         # only one happy path through the run_QUAST_app code
         self.start_test()
@@ -269,6 +265,51 @@ class kb_quastTest(unittest.TestCase):
                                                  'workspace_name': self.ws_info[1]})[0]
         self.check_quast_app_output(ret, 315170, 315200, '6aae4f232d4d011210eca1965093c22d',
                                     '2010dc270160ee661d76dad6051cda32')
+
+    def test_fail_app_no_workspace(self):
+        self.start_test()
+        self.fail_quast_app(
+            {'assemblies': [str(self.ws_info[0]) + '/9999999']},
+            'No workspace name provided')
+
+    def test_fail_app_null_workspace(self):
+        self.start_test()
+        self.fail_quast_app(
+            {'assemblies': [str(self.ws_info[0]) + '/9999999'],
+             'workspace_name': None},
+            'No workspace name provided')
+
+    def test_fail_app_bad_ws_ref(self):
+        self.start_test()
+        self.fail_quast_app(
+            {'assemblies': [str(self.ws_info[0]) + '/999999999999/999999'],
+             'workspace_name': self.ws_info[1]},
+            'No object with id 999999999999 exists in workspace {} (name {})'.format(
+                self.ws_info[0], self.ws_info[1]),
+            exception=WorkspaceError)
+
+    def test_fail_app_bad_ws_name(self):
+        self.start_test()
+        tf = 'greengenes_UnAligSeq24606_edit1.fa'
+        target = os.path.join(self.scratch, tf)
+        shutil.copy('data/' + tf, target)
+        ref = self.au.save_assembly_from_fasta(
+            {'file': {'path': target},
+             'workspace_name': self.ws_info[1],
+             'assembly_name': 'assy1'})
+        self.fail_quast_app(
+            {'assemblies': [ref],
+             'workspace_name': 'ireallyhopethisworkspacedoesntexistorthistestwillfail'},
+            'No workspace with name ireallyhopethisworkspacedoesntexistorthistestwillfail exists',
+            exception=KBRError, contains=True)
+
+    def fail_quast_app(self, params, error, exception=ValueError, contains=True):
+        with self.assertRaises(exception) as context:
+            self.impl.run_QUAST_app(self.ctx, params)
+        if contains:
+            self.assertIn(error, str(context.exception.message))
+        else:
+            self.assertEqual(error, str(context.exception.message))
 
     def fail_quast(self, params, error, exception=ValueError):
         with self.assertRaises(exception) as context:
