@@ -334,6 +334,7 @@ class kb_quastTest(unittest.TestCase):
 
         self.assertEqual(objname, obj['info'][1])
         rmd5 = hashlib.md5(d['text_message']).hexdigest()
+        self.assertEqual(d['direct_html_link_index'], 0)
         self.assertEqual(rmd5, repttxtmd5)
         self.assertEqual(links[0]['name'], 'report.html')
         self.assertEqual(links[0]['description'], 'QUAST report output')
