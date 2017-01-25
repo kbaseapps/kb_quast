@@ -6,7 +6,7 @@
   "categories" : [ "assembly" ],
   "widgets" : {
     "input" : "kbaseNarrativeMethodInput",
-    "output": "kbaseReportView"
+    "output": "no-display"
   },
   "parameters" : [ {
     "id" : "assemblies",

@@ -184,7 +184,7 @@ stored in a zip file in Shock.
                  'direct_html_link_index': 0,
                  'html_links': [{'shock_id': quastret['shock_id'],
                                  'name': 'report.html',
-                                 'description': 'QUAST report output'}
+                                 'label': 'QUAST report'}
                                 ],
                  'file_links': [],  # error from KBR otherwise
                  'objects_created': [],  # same
