@@ -337,7 +337,7 @@ class kb_quastTest(unittest.TestCase):
         self.assertEqual(d['direct_html_link_index'], 0)
         self.assertEqual(rmd5, repttxtmd5)
         self.assertEqual(links[0]['name'], 'report.html')
-        self.assertEqual(links[0]['description'], 'QUAST report output')
+        self.assertEqual(links[0]['label'], 'QUAST report')
 
         shockret = requests.get(self.shockURL + '/node/' + shocknode,
                                 headers={'Authorization': 'OAuth ' + self.token}).json()['data']
