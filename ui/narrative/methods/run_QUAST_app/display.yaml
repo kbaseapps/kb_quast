@@ -1,4 +1,4 @@
-name     : Run QUAST
+name     : QUAST
 subtitle : Run QUAST on a set of assemblies.
 tooltip  : Run QUAST on a set of assemblies.
 
