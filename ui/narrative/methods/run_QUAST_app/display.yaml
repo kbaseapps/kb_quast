@@ -5,6 +5,8 @@ tooltip  : Run QUAST on a set of assemblies.
 screenshots :
     []
 
+icon: quast-blue_360.png
+
 suggestions :
     apps:
         related :
