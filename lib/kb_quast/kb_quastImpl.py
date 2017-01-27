@@ -175,8 +175,7 @@ stored in a zip file in Shock.
         quastret = self.run_QUAST(ctx, params)[0]
         with open(_os.path.join(quastret['quast_path'], 'report.txt')) as reportfile:
             report = reportfile.read()
-        # TODO before release - use released version of KBR
-        kbr = _KBRepClient(self.callback_url, service_ver='dev')
+        kbr = _KBRepClient(self.callback_url)
         self.log('Saving QUAST report')
         try:
             repout = kbr.create_extended_report(
@@ -186,8 +185,6 @@ stored in a zip file in Shock.
                                  'name': 'report.html',
                                  'label': 'QUAST report'}
                                 ],
-                 'file_links': [],  # error from KBR otherwise
-                 'objects_created': [],  # same
                  'report_object_name': 'kb_quast_report_' + str(uuid.uuid4()),
                  'workspace_name': wsname
                  })
