@@ -1,6 +1,6 @@
-name     : QUAST
-subtitle : Run QUAST on a set of assemblies.
-tooltip  : Run QUAST on a set of assemblies.
+name     : QUAST - Quality Assessment Tool for Genome Assemblies
+subtitle : Run QUAST on a set of assemblies to assess quality.
+tooltip  : Run QUAST on a set of assemblies to assess quality.
 
 screenshots :
     []
