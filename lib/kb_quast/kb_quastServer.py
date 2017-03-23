@@ -20,7 +20,7 @@ from kb_quast.authclient import KBaseAuth as _KBaseAuth
 
 DEPLOY = 'KB_DEPLOYMENT_CONFIG'
 SERVICE = 'KB_SERVICE_NAME'
-AUTH = 'auth-server-url'
+AUTH = 'auth-service-url'
 
 # Note that the error fields do not match the 2.0 JSONRPC spec
 
@@ -109,7 +109,11 @@ class JSONRPCServiceCustom(JSONRPCService):
             # Exception was raised inside the method.
             newerr = JSONServerError()
             newerr.trace = traceback.format_exc()
-            newerr.data = e.message
+            if isinstance(e.message, basestring):
+                newerr.data = e.message
+            else:
+                # Some exceptions embed other exceptions as the message
+                newerr.data = repr(e.message)
             raise newerr
         return result
 
@@ -332,11 +336,11 @@ class Application(object):
         self.rpc_service.add(impl_kb_quast.run_QUAST_app,
                              name='kb_quast.run_QUAST_app',
                              types=[dict])
-        self.method_authentication['kb_quast.run_QUAST_app'] = 'required' # noqa
+        self.method_authentication['kb_quast.run_QUAST_app'] = 'required'  # noqa
         self.rpc_service.add(impl_kb_quast.run_QUAST,
                              name='kb_quast.run_QUAST',
                              types=[dict])
-        self.method_authentication['kb_quast.run_QUAST'] = 'required' # noqa
+        self.method_authentication['kb_quast.run_QUAST'] = 'required'  # noqa
         self.rpc_service.add(impl_kb_quast.status,
                              name='kb_quast.status',
                              types=[dict])
