@@ -51,9 +51,9 @@ stored in a zip file in Shock.
     # state. A method could easily clobber the state set by another while
     # the latter method is running.
     ######################################### noqa
-    VERSION = "0.0.1"
-    GIT_URL = "https://github.com/mrcreosote/kb_quast"
-    GIT_COMMIT_HASH = "8ea076d3ed79b145c8d47a20c55843fb36095d6b"
+    VERSION = "0.0.3"
+    GIT_URL = "https://github.com/rsutormin/kb_quast"
+    GIT_COMMIT_HASH = "15698fac05fae466539fd4be821d7aca7e5cbb18"
 
     #BEGIN_CLASS_HEADER
 
@@ -147,6 +147,7 @@ stored in a zip file in Shock.
         self.ws_url = config['workspace-url']
         #END_CONSTRUCTOR
         pass
+
 
     def run_QUAST_app(self, ctx, params):
         """
@@ -296,7 +297,6 @@ stored in a zip file in Shock.
                              'output is not type dict as required.')
         # return the results
         return [output]
-
     def status(self, ctx):
         #BEGIN_STATUS
         del ctx

@@ -23,6 +23,7 @@ from AssemblyUtil.baseclient import ServerError as AssemblyError
 from KBaseReport.baseclient import ServerError as KBRError
 from kb_quast.kb_quastImpl import kb_quast
 from kb_quast.kb_quastServer import MethodContext
+from kb_quast.authclient import KBaseAuth as _KBaseAuth
 
 
 class kb_quastTest(unittest.TestCase):
@@ -32,9 +33,16 @@ class kb_quastTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.token = environ.get('KB_AUTH_TOKEN', None)
-        user_id = requests.post(
-            'https://kbase.us/services/authorization/Sessions/Login',
-            data='token={}&fields=user_id'.format(cls.token)).json()['user_id']
+        config_file = environ.get('KB_DEPLOYMENT_CONFIG', None)
+        cls.cfg = {}
+        config = ConfigParser()
+        config.read(config_file)
+        for nameval in config.items('kb_quast'):
+            cls.cfg[nameval[0]] = nameval[1]
+        authServiceUrl = cls.cfg.get('auth-service-url',
+                "https://kbase.us/services/authorization/Sessions/Login")
+        auth_client = _KBaseAuth(authServiceUrl)
+        user_id = auth_client.get_user(cls.token)
         # WARNING: don't call any logging methods on the context object,
         # it'll result in a NoneType error
         cls.ctx = MethodContext(None)
@@ -46,12 +54,6 @@ class kb_quastTest(unittest.TestCase):
                              'method_params': []
                              }],
                         'authenticated': 1})
-        config_file = environ.get('KB_DEPLOYMENT_CONFIG', None)
-        cls.cfg = {}
-        config = ConfigParser()
-        config.read(config_file)
-        for nameval in config.items('kb_quast'):
-            cls.cfg[nameval[0]] = nameval[1]
         cls.shockURL = cls.cfg['shock-url']
         cls.ws = Workspace(cls.cfg['workspace-url'], token=cls.token)
         cls.hs = HandleService(url=cls.cfg['handle-service-url'],
@@ -127,7 +129,7 @@ class kb_quastTest(unittest.TestCase):
             {'path': 'data/greengenes_UnAligSeq24606.fa', 'label': 'foo'},
             {'path': 'data/greengenes_UnAligSeq24606_edit1.fa'}],
                                              'make_handle': 1})[0]
-        self.check_quast_output(ret, 324690, 324740, 'b45307b9bed53de2fa0d0b9780be3faf',
+        self.check_quast_output(ret, 324600, 324740, 'b45307b9bed53de2fa0d0b9780be3faf',
                                 '862913a9383b42d0f0fb95beb113296f')
 
     def test_quast_from_1_wsobj(self):
@@ -167,7 +169,7 @@ class kb_quastTest(unittest.TestCase):
         wsref2 = str(objs[1][7] + '/' + str(objs[1][1]))
 
         ret = self.impl.run_QUAST(self.ctx, {'assemblies': [wsref1, wsref2], 'make_handle': 1})[0]
-        self.check_quast_output(ret, 320910, 320950, '5648903ef181d4ab189a206f6be28c47',
+        self.check_quast_output(ret, 320800, 320950, '5648903ef181d4ab189a206f6be28c47',
                                 'f48d2c38619ef93ae8972ce4e6ebcbf4')
 
     def test_fail_no_input(self):
