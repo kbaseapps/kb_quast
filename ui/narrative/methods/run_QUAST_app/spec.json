@@ -1,7 +1,9 @@
 {
-  "ver" : "0.0.1",
-  "authors" : [ ],
-  "contact" : "help@kbase.us",
+  "ver" : "0.0.2",
+	"authors": [
+		"gaprice"
+	],
+  "contact" : "http://kbase.us/contact-us/",
   "visible" : true,
   "categories" : [ "assembly" ],
   "widgets" : {
