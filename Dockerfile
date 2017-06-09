@@ -22,7 +22,7 @@ RUN cd /opt \
     && rm -r quast_libs/genemark\
     && rm -r quast_libs/genemark-es
 
-RUN pip install ipython \
+RUN pip install ipython==5.3.0 \
     && pip install psutil
 
 RUN apt-get install nano \
