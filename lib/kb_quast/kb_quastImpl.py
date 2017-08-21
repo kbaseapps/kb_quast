@@ -51,13 +51,14 @@ stored in a zip file in Shock.
     # state. A method could easily clobber the state set by another while
     # the latter method is running.
     ######################################### noqa
-    VERSION = "0.0.3"
-    GIT_URL = "https://github.com/rsutormin/kb_quast"
-    GIT_COMMIT_HASH = "15698fac05fae466539fd4be821d7aca7e5cbb18"
+    VERSION = "0.0.4"
+    GIT_URL = "https://github.com/Tianhao-Gu/kb_quast.git"
+    GIT_COMMIT_HASH = "118cf4d7a0ddc0189fe2a4d11c9afff03cbc2dc1"
 
     #BEGIN_CLASS_HEADER
 
     THREADS_PER_CORE = 1
+    TEN_GB = 10 * 1024 * 1024 * 1024
 
     def log(self, message, prefix_newline=False):
         print(('\n' if prefix_newline else '') + str(_time.time()) + ': ' + message)
@@ -136,6 +137,27 @@ stored in a zip file in Shock.
             self.log(err)
             raise ValueError(err)
 
+    def check_large_input(self, filepaths, labels, input_type):
+
+        large_input = dict()
+        large_objects = list()
+        checked_filepath = list()
+        checked_labels = list()
+
+        for i, filepath in enumerate(filepaths):
+            if _os.path.getsize(filepath) < self.TEN_GB:
+                checked_filepath.append(filepath)
+                checked_labels.append(labels[i])
+            else:
+                if input_type == 'assembly':
+                    large_objects.append(labels[i])
+                elif input_type == 'file':
+                    large_objects.append(filepath)
+
+        large_input.update({input_type: large_objects})
+
+        return checked_filepath, checked_labels, large_input
+
     #END_CLASS_HEADER
 
     # config contains contents of config file in a hash or None if it couldn't
@@ -176,6 +198,17 @@ stored in a zip file in Shock.
         quastret = self.run_QUAST(ctx, params)[0]
         with open(_os.path.join(quastret['quast_path'], 'report.txt')) as reportfile:
             report = reportfile.read()
+
+        large_input = quastret['large_input']
+        input_type, large_objects = large_input.items()[0]
+        if large_objects:
+            if input_type == 'assembly':
+                feedback_msg = '\n\nSkipped large Assembly object(s):\n'
+            elif input_type == 'file':
+                feedback_msg = '\n\nSkipped large file(s):\n'
+            feedback_msg += '{}'.format('\n'.join(large_objects))
+            report += feedback_msg
+
         kbr = _KBRepClient(self.callback_url)
         self.log('Saving QUAST report')
         try:
@@ -260,6 +293,7 @@ stored in a zip file in Shock.
             info = self.get_assembly_object_info(assemblies, ctx['token'])
             filepaths = self.get_assemblies(tdir, info)
             labels = [i.name for i in info]
+            filepaths, labels, large_input = self.check_large_input(filepaths, labels, 'assembly')
         else:
             if type(files) != list:
                 raise ValueError('files must be a list')
@@ -273,6 +307,14 @@ stored in a zip file in Shock.
                 l = l if l else _os.path.basename(p)
                 filepaths.append(p)
                 labels.append(l)
+            filepaths, labels, large_input = self.check_large_input(filepaths, labels, 'file')
+
+        if not filepaths:
+            input_type, large_objects = large_input.items()[0]
+            if input_type == 'assembly':
+                raise ValueError('given Assembly {} is too large'.format(large_objects))
+            elif input_type == 'file':
+                raise ValueError('given File {} is too large'.format(large_objects))
 
         out = _os.path.join(tdir, 'quast_results')
         # TODO check for name duplicates in labels and do something about it
@@ -289,6 +331,7 @@ stored in a zip file in Shock.
             self.log(str(dfue))
             raise
         output['quast_path'] = out
+        output['large_input'] = large_input
         #END run_QUAST
 
         # At some point might do deeper type checking...

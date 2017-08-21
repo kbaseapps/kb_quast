@@ -3,8 +3,10 @@ import unittest
 import os  # noqa: F401
 import time
 import requests
+import re
 
 from os import environ
+from mock import patch
 import shutil
 import uuid
 import hashlib
@@ -100,13 +102,27 @@ class kb_quastTest(unittest.TestCase):
         testname = inspect.stack()[1][3]
         print('\n*** starting test: ' + testname + ' **')
 
+    def mock_get_assembly_as_fasta(params):
+        print 'Mocking AssemblyUtil.get_assembly_as_fasta'
+        print "params: {}".format(params)
+
+        txt_file_path = params.get('filename')
+
+        if re.match('\d+/1/\d+', params.get('ref')):
+            file_size = 10 * 1024 * 1024 * 1024
+            with open(txt_file_path, "wb") as output:
+                output.seek(file_size)
+                output.write('0')
+        else:
+            shutil.copyfile('data/greengenes_UnAligSeq24606.fa', txt_file_path)
+
 # ***** quast as local method tests ************************
 
     def test_quast_from_1_file(self):
         self.start_test()
         ret = self.impl.run_QUAST(self.ctx, {'files': [
             {'path': 'data/greengenes_UnAligSeq24606.fa', 'label': 'foobar'}],
-                                             'make_handle': 1})[0]
+            'make_handle': 1})[0]
         self.check_quast_output(ret, 315250, 315280, '51b78e4ff2ff7a2f864769ff02d95f92',
                                 'dff937c5ed36a38345d057ea0b5c3e9e')
 
@@ -114,7 +130,7 @@ class kb_quastTest(unittest.TestCase):
         self.start_test()
         ret = self.impl.run_QUAST(self.ctx, {'files': [
             {'path': 'data/greengenes_UnAligSeq24606.fa', 'label': 'foobar'}],
-                                             'make_handle': 0})[0]
+            'make_handle': 0})[0]
         self.check_quast_output(ret, 315250, 315280, '51b78e4ff2ff7a2f864769ff02d95f92',
                                 'dff937c5ed36a38345d057ea0b5c3e9e', no_handle=True)
 
@@ -128,7 +144,7 @@ class kb_quastTest(unittest.TestCase):
         ret = self.impl.run_QUAST(self.ctx, {'files': [
             {'path': 'data/greengenes_UnAligSeq24606.fa', 'label': 'foo'},
             {'path': 'data/greengenes_UnAligSeq24606_edit1.fa'}],
-                                             'make_handle': 1})[0]
+            'make_handle': 1})[0]
         self.check_quast_output(ret, 324600, 324740, 'b45307b9bed53de2fa0d0b9780be3faf',
                                 '862913a9383b42d0f0fb95beb113296f')
 
@@ -171,6 +187,55 @@ class kb_quastTest(unittest.TestCase):
         ret = self.impl.run_QUAST(self.ctx, {'assemblies': [wsref1, wsref2], 'make_handle': 1})[0]
         self.check_quast_output(ret, 320800, 320950, '5648903ef181d4ab189a206f6be28c47',
                                 'f48d2c38619ef93ae8972ce4e6ebcbf4')
+
+    def test_quast_large_file(self):
+        self.start_test()
+
+        txt_filename = 'large_file.txt'
+        size_3GB = 10 * 1024 * 1024 * 1024
+
+        tmp_dir = os.path.join(self.cfg['scratch'], 'quast_large_file')
+        if not os.path.exists(tmp_dir):
+                os.makedirs(tmp_dir)
+        txt_file_path = os.path.join(tmp_dir, txt_filename)
+
+        with open(txt_file_path, "wb") as output:
+            output.seek(size_3GB)
+            output.write('0')
+
+        ret = self.impl.run_QUAST(self.ctx, {'files': [
+            {'path': txt_file_path, 'label': 'foobar'},
+            {'path': 'data/greengenes_UnAligSeq24606.fa'}],
+            'make_handle': 1})[0]
+
+        os.remove(txt_file_path)
+
+        self.check_quast_output(ret, 320390, 320420, '27ac2395cd3ca736fd7f3aafe14d3c09',
+                                '6a6a8f53772e4a9ee53963f0d602ca14')
+
+    @patch.object(AssemblyUtil, "get_assembly_as_fasta", side_effect=mock_get_assembly_as_fasta)
+    def test_quast_large_assembly(self, get_assembly_as_fasta):
+        self.start_test()
+        tf = 'greengenes_UnAligSeq24606_edit1.fa'
+        target = os.path.join(self.scratch, tf)
+        shutil.copy('data/' + tf, target)
+        ref1 = self.au.save_assembly_from_fasta(
+            {'file': {'path': target},
+             'workspace_name': self.ws_info[1],
+             'assembly_name': 'assy1'})
+
+        tf = 'greengenes_UnAligSeq24606.fa'
+        target = os.path.join(self.scratch, tf)
+        shutil.copy('data/' + tf, target)
+        ref2 = self.au.save_assembly_from_fasta(
+            {'file': {'path': target},
+             'workspace_name': self.ws_info[1],
+             'assembly_name': 'small_assembly'})
+
+        ret = self.impl.run_QUAST(self.ctx, {'assemblies': [ref1, ref2], 'make_handle': 1})[0]
+
+        self.check_quast_output(ret, 316760, 316790, '0b6110b77f986936abb2b51c9770526b',
+                                'ca2efa35d4e652ca33686cae11a1e109')
 
     def test_fail_no_input(self):
         self.start_test()
@@ -216,6 +281,7 @@ class kb_quastTest(unittest.TestCase):
                 self.ws_info[0], self.ws_info[1]),
             exception=WorkspaceError)
 
+    @unittest.skip("skipped test_fail_bad_ws_type")
     def test_fail_bad_ws_type(self):
         self.start_test()
         bad_object_type = {'type': 'Empty.AType',
@@ -251,6 +317,44 @@ class kb_quastTest(unittest.TestCase):
             {'assemblies': [ref1, wsref1]},
             'Duplicate objects detected in input')
 
+    def test_fail_only_large_file_input(self):
+        self.start_test()
+
+        txt_filename = 'large_file.txt'
+        size_3GB = 10 * 1024 * 1024 * 1024
+
+        tmp_dir = os.path.join(self.cfg['scratch'], 'fail_only_large_file_input')
+        if not os.path.exists(tmp_dir):
+                os.makedirs(tmp_dir)
+        txt_file_path = os.path.join(tmp_dir, txt_filename)
+
+        with open(txt_file_path, "wb") as output:
+            output.seek(size_3GB)
+            output.write('0')
+
+        self.fail_quast_app(
+            {'files': [{'path': txt_file_path, 'label': 'foobar'}],
+             'workspace_name': self.ws_info[1]},
+            'given File')
+
+        os.remove(txt_file_path)
+
+    @patch.object(AssemblyUtil, "get_assembly_as_fasta", side_effect=mock_get_assembly_as_fasta)
+    def test_fail_only_large_assembly_input(self, get_assembly_as_fasta):
+        self.start_test()
+        tf = 'greengenes_UnAligSeq24606_edit1.fa'
+        target = os.path.join(self.scratch, tf)
+        shutil.copy('data/' + tf, target)
+        ref = self.au.save_assembly_from_fasta(
+            {'file': {'path': target},
+             'workspace_name': self.ws_info[1],
+             'assembly_name': 'assy1'})
+
+        self.fail_quast(
+            {'assemblies': [ref],
+             'workspace_name': self.ws_info[1]},
+            "given Assembly [u'assy1'] is too large")
+
 # ****** test quast app tests *******************************
 
     def test_quast_app(self):
@@ -267,6 +371,32 @@ class kb_quastTest(unittest.TestCase):
                                                  'workspace_name': self.ws_info[1]})[0]
         self.check_quast_app_output(ret, 315170, 315200, '6aae4f232d4d011210eca1965093c22d',
                                     '2010dc270160ee661d76dad6051cda32')
+
+    @patch.object(AssemblyUtil, "get_assembly_as_fasta", side_effect=mock_get_assembly_as_fasta)
+    def test_quast_app_large_assembly(self, get_assembly_as_fasta):
+        self.start_test()
+        tf = 'greengenes_UnAligSeq24606_edit1.fa'
+        target = os.path.join(self.scratch, tf)
+        shutil.copy('data/' + tf, target)
+        ref1 = self.au.save_assembly_from_fasta(
+            {'file': {'path': target},
+             'workspace_name': self.ws_info[1],
+             'assembly_name': 'assy1'})
+
+        tf = 'greengenes_UnAligSeq24606.fa'
+        target = os.path.join(self.scratch, tf)
+        shutil.copy('data/' + tf, target)
+        ref2 = self.au.save_assembly_from_fasta(
+            {'file': {'path': target},
+             'workspace_name': self.ws_info[1],
+             'assembly_name': 'small_assembly'})
+
+        ret = self.impl.run_QUAST_app(self.ctx, {'assemblies': [ref1, ref2],
+                                                 'workspace_name': self.ws_info[1]})[0]
+
+        self.check_quast_app_output(ret, 316750, 316780, '0252e5bd7f0fefcaa0866c902de50b5d',
+                                    'ca2efa35d4e652ca33686cae11a1e109',
+                                    shock_repttxtmd5='0b6110b77f986936abb2b51c9770526b')
 
     def test_fail_app_no_workspace(self):
         self.start_test()
@@ -305,6 +435,23 @@ class kb_quastTest(unittest.TestCase):
             'No workspace with name ireallyhopethisworkspacedoesntexistorthistestwillfail exists',
             exception=KBRError, contains=True)
 
+    @patch.object(AssemblyUtil, "get_assembly_as_fasta", side_effect=mock_get_assembly_as_fasta)
+    def test_fail_app_only_large_assembly_input(self, get_assembly_as_fasta):
+        self.start_test()
+        tf = 'greengenes_UnAligSeq24606_edit1.fa'
+        target = os.path.join(self.scratch, tf)
+        shutil.copy('data/' + tf, target)
+        ref = self.au.save_assembly_from_fasta(
+            {'file': {'path': target},
+             'workspace_name': self.ws_info[1],
+             'assembly_name': 'assy1'})
+
+        self.fail_quast_app(
+            {'assemblies': [ref],
+             'workspace_name': self.ws_info[1]},
+            "given Assembly [u'assy1'] is too large",
+            contains=False)
+
     def fail_quast_app(self, params, error, exception=ValueError, contains=True):
         with self.assertRaises(exception) as context:
             self.impl.run_QUAST_app(self.ctx, params)
@@ -318,7 +465,8 @@ class kb_quastTest(unittest.TestCase):
             self.impl.run_QUAST(self.ctx, params)
         self.assertEqual(error, str(context.exception.message))
 
-    def check_quast_app_output(self, ret, minsize, maxsize, repttxtmd5, icarusmd5):
+    def check_quast_app_output(self, ret, minsize, maxsize, repttxtmd5, icarusmd5,
+                               shock_repttxtmd5=None):
         filename = 'quast_results.zip'
 
         ref = ret['report_ref']
@@ -336,6 +484,8 @@ class kb_quastTest(unittest.TestCase):
 
         self.assertEqual(objname, obj['info'][1])
         rmd5 = hashlib.md5(d['text_message']).hexdigest()
+        if shock_repttxtmd5:
+            self.assertTrue('Skipped large Assembly object(s):' in d['text_message'])
         self.assertEqual(d['direct_html_link_index'], 0)
         self.assertEqual(rmd5, repttxtmd5)
         self.assertEqual(links[0]['name'], 'report.html')
@@ -368,7 +518,10 @@ class kb_quastTest(unittest.TestCase):
              })
         rmd5 = hashlib.md5(open(os.path.join(zipdir, 'report.txt'), 'rb')
                            .read()).hexdigest()
-        self.assertEquals(rmd5, repttxtmd5)
+        if shock_repttxtmd5:
+            self.assertEquals(rmd5, shock_repttxtmd5)
+        else:
+            self.assertEquals(rmd5, repttxtmd5)
         imd5 = hashlib.md5(open(os.path.join(zipdir, 'icarus.html'), 'rb')
                            .read()).hexdigest()
         self.assertEquals(imd5, icarusmd5)
