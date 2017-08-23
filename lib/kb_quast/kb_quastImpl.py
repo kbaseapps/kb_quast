@@ -113,12 +113,16 @@ stored in a zip file in Shock.
             raise ValueError('Duplicate objects detected in input')  # could list objs later
         return info
 
-    def run_quast_exec(self, outdir, filepaths, labels):
+    def run_quast_exec(self, outdir, filepaths, labels, skip_glimmer=False):
         threads = psutil.cpu_count() * self.THREADS_PER_CORE
         # DO NOT use genemark instead of glimmer, not open source
         # DO NOT use metaQUAST, uses SILVA DB which is not open source
         cmd = ['quast.py', '--threads', str(threads), '-o', outdir, '--labels', ','.join(labels),
                '--glimmer', '--contig-thresholds', '0,1000,10000,100000,1000000'] + filepaths
+
+        if skip_glimmer:
+            cmd.remove('--glimmer')
+
         self.log('running QUAST with command line ' + str(cmd))
         retcode = _subprocess.call(cmd)
         self.log('QUAST return code: ' + str(retcode))
@@ -129,7 +133,7 @@ stored in a zip file in Shock.
         # quast will ignore bad files and keep going, which is a disaster for
         # reproducibility and accuracy if you're not watching the logs like a hawk.
         # for now use this hack to check that all files were processed. Maybe there's a better way.
-        files_proc = len(_os.listdir(_os.path.join(outdir, 'predicted_genes'))) / 2
+        files_proc = len(open(_os.path.join(outdir, 'report.tsv'), 'r').readline().split('\t')) - 1
         files_exp = len(filepaths)
         if files_proc != files_exp:
             err = ('QUAST skipped some files - {} expected, {} processed.'
@@ -137,26 +141,15 @@ stored in a zip file in Shock.
             self.log(err)
             raise ValueError(err)
 
-    def check_large_input(self, filepaths, labels, input_type):
+    def check_large_input(self, filepaths):
+        skip_glimmer = False
 
-        large_input = dict()
-        large_objects = list()
-        checked_filepath = list()
-        checked_labels = list()
+        for filepath in filepaths:
+            if _os.path.getsize(filepath) > self.TEN_GB:
+                skip_glimmer = True
+                break
 
-        for i, filepath in enumerate(filepaths):
-            if _os.path.getsize(filepath) < self.TEN_GB:
-                checked_filepath.append(filepath)
-                checked_labels.append(labels[i])
-            else:
-                if input_type == 'assembly':
-                    large_objects.append(labels[i])
-                elif input_type == 'file':
-                    large_objects.append(filepath)
-
-        large_input.update({input_type: large_objects})
-
-        return checked_filepath, checked_labels, large_input
+        return skip_glimmer
 
     #END_CLASS_HEADER
 
@@ -198,17 +191,6 @@ stored in a zip file in Shock.
         quastret = self.run_QUAST(ctx, params)[0]
         with open(_os.path.join(quastret['quast_path'], 'report.txt')) as reportfile:
             report = reportfile.read()
-
-        large_input = quastret['large_input']
-        input_type, large_objects = large_input.items()[0]
-        if large_objects:
-            if input_type == 'assembly':
-                feedback_msg = '\n\nSkipped large Assembly object(s):\n'
-            elif input_type == 'file':
-                feedback_msg = '\n\nSkipped large file(s):\n'
-            feedback_msg += '{}'.format('\n'.join(large_objects))
-            report += feedback_msg
-
         kbr = _KBRepClient(self.callback_url)
         self.log('Saving QUAST report')
         try:
@@ -293,7 +275,6 @@ stored in a zip file in Shock.
             info = self.get_assembly_object_info(assemblies, ctx['token'])
             filepaths = self.get_assemblies(tdir, info)
             labels = [i.name for i in info]
-            filepaths, labels, large_input = self.check_large_input(filepaths, labels, 'assembly')
         else:
             if type(files) != list:
                 raise ValueError('files must be a list')
@@ -307,18 +288,12 @@ stored in a zip file in Shock.
                 l = l if l else _os.path.basename(p)
                 filepaths.append(p)
                 labels.append(l)
-            filepaths, labels, large_input = self.check_large_input(filepaths, labels, 'file')
 
-        if not filepaths:
-            input_type, large_objects = large_input.items()[0]
-            if input_type == 'assembly':
-                raise ValueError('given Assembly {} is too large'.format(large_objects))
-            elif input_type == 'file':
-                raise ValueError('given File {} is too large'.format(large_objects))
+        skip_glimmer = self.check_large_input(filepaths)
 
         out = _os.path.join(tdir, 'quast_results')
         # TODO check for name duplicates in labels and do something about it
-        self.run_quast_exec(out, filepaths, labels)
+        self.run_quast_exec(out, filepaths, labels, skip_glimmer)
         dfu = _DFUClient(self.callback_url)
         try:
             mh = params.get('make_handle')
@@ -331,7 +306,6 @@ stored in a zip file in Shock.
             self.log(str(dfue))
             raise
         output['quast_path'] = out
-        output['large_input'] = large_input
         #END run_QUAST
 
         # At some point might do deeper type checking...
