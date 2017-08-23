@@ -3,7 +3,6 @@ import unittest
 import os  # noqa: F401
 import time
 import requests
-import re
 
 from os import environ
 from mock import patch
