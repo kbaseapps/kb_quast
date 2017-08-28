@@ -15,6 +15,7 @@ from KBaseReport.KBaseReportClient import KBaseReport as _KBRepClient
 from KBaseReport.baseclient import ServerError as _RepError
 import psutil
 import uuid
+from Bio import SeqIO as _SeqIO
 
 
 class ObjInfo(object):
@@ -58,7 +59,7 @@ stored in a zip file in Shock.
     #BEGIN_CLASS_HEADER
 
     THREADS_PER_CORE = 1
-    TEN_GB = 10 * 1024 * 1024 * 1024
+    TEN_MB = 10 * 1024 * 1024
 
     def log(self, message, prefix_newline=False):
         print(('\n' if prefix_newline else '') + str(_time.time()) + ': ' + message)
@@ -145,7 +146,8 @@ stored in a zip file in Shock.
         skip_glimmer = False
 
         for filepath in filepaths:
-            if _os.path.getsize(filepath) > self.TEN_GB:
+            records = list(_SeqIO.parse(filepath, 'fasta'))
+            if len(records) > self.TEN_MB:
                 skip_glimmer = True
                 break
 

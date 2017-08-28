@@ -142,7 +142,7 @@ class kb_quastTest(unittest.TestCase):
             {'path': 'data/greengenes_UnAligSeq24606_edit1.fa'}],
             'make_handle': 1})[0]
 
-        self.check_quast_output(ret, 320830, 320860, 'e8c7d24f35a8c3feb1da4c58623ad277',
+        self.check_quast_output(ret, 320810, 320860, 'e8c7d24f35a8c3feb1da4c58623ad277',
                                 '862913a9383b42d0f0fb95beb113296f')
 
     def test_quast_from_1_wsobj(self):
