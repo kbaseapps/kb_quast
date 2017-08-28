@@ -101,7 +101,40 @@ class kb_quastTest(unittest.TestCase):
         testname = inspect.stack()[1][3]
         print('\n*** starting test: ' + testname + ' **')
 
-# ***** quast as local method tests ************************           
+# ***** quast as local method tests ************************   
+    
+    @patch.object(kb_quast, "TEN_MB", new=10 * 1024)
+    def test_check_large_input(self):
+        self.start_test()
+
+        file_dir = os.path.join(self.scratch, 'quast_large_file')
+        if not os.path.exists(file_dir):
+            os.makedirs(file_dir)
+
+        large_file_name = 'large_file.fa'
+        large_file_path = os.path.join(file_dir, large_file_name)
+
+        size_fake_10MB = 10 * 1024
+
+        # writing exactly TEN_MB base count indicators
+        with open(large_file_path, "ab") as output:
+            content = '\n'.join(['>'] * size_fake_10MB)
+            output.write(content)
+
+        skip_glimmer = self.impl.check_large_input([large_file_path])
+
+        self.assertFalse(skip_glimmer)    
+
+        # writing exactly TEN_MB + 1 base count indicators
+        with open(large_file_path, "ab") as output:
+            content = '\n>'
+            output.write(content)
+
+        skip_glimmer = self.impl.check_large_input([large_file_path])
+
+        self.assertTrue(skip_glimmer) 
+
+        os.remove(large_file_path)
 
     def test_quast_from_1_file(self):
         self.start_test()

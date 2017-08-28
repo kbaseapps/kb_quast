@@ -54,7 +54,7 @@ stored in a zip file in Shock.
     ######################################### noqa
     VERSION = "0.0.4"
     GIT_URL = "https://github.com/Tianhao-Gu/kb_quast.git"
-    GIT_COMMIT_HASH = "118cf4d7a0ddc0189fe2a4d11c9afff03cbc2dc1"
+    GIT_COMMIT_HASH = "872cd4da2300d0695eaaa2f512d96315b4e5ce62"
 
     #BEGIN_CLASS_HEADER
 
@@ -122,6 +122,7 @@ stored in a zip file in Shock.
                '--glimmer', '--contig-thresholds', '0,1000,10000,100000,1000000'] + filepaths
 
         if skip_glimmer:
+            self.log('skipping glimmer due to large input files')
             cmd.remove('--glimmer')
 
         self.log('running QUAST with command line ' + str(cmd))
@@ -146,8 +147,8 @@ stored in a zip file in Shock.
         skip_glimmer = False
 
         for filepath in filepaths:
-            records = list(_SeqIO.parse(filepath, 'fasta'))
-            if len(records) > self.TEN_MB:
+            basecount = len(list(_SeqIO.parse(filepath, 'fasta')))
+            if basecount > self.TEN_MB:
                 skip_glimmer = True
                 break
 
