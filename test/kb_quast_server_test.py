@@ -229,34 +229,6 @@ class kb_quastTest(unittest.TestCase):
         self.check_quast_output(ret, 320800, 320950, '5648903ef181d4ab189a206f6be28c47',
                                 'f48d2c38619ef93ae8972ce4e6ebcbf4')
 
-    def test_quast_from_2_wsobj_force_skip_gilmmer(self):
-        self.start_test()
-        tf = 'greengenes_UnAligSeq24606_edit1.fa'
-        target = os.path.join(self.scratch, tf)
-        shutil.copy('data/' + tf, target)
-        ref1 = self.au.save_assembly_from_fasta(
-            {'file': {'path': target},
-             'workspace_name': self.ws_info[1],
-             'assembly_name': 'assy1'})
-
-        tf = 'greengenes_UnAligSeq24606.fa'
-        target = os.path.join(self.scratch, tf)
-        shutil.copy('data/' + tf, target)
-        ref2 = self.au.save_assembly_from_fasta(
-            {'file': {'path': target},
-             'workspace_name': self.ws_info[1],
-             'assembly_name': 'JohnCleeseLust'})
-
-        # test using names vs ids
-        objs = self.ws.get_object_info3({'objects': [{'ref': ref1}, {'ref': ref2}]})['infos']
-        wsref1 = str(objs[0][7] + '/' + str(objs[0][1]))
-        wsref2 = str(objs[1][7] + '/' + str(objs[1][1]))
-
-        ret = self.impl.run_QUAST(self.ctx, {'assemblies': [wsref1, wsref2], 'make_handle': 1,
-                                             'force_glimmer': True})[0]
-        self.check_quast_output(ret, 320800, 320950, '5648903ef181d4ab189a206f6be28c47',
-                                'f48d2c38619ef93ae8972ce4e6ebcbf4', skip_glimmer=True)
-
     @patch.object(kb_quast, "TEN_MB", new=10)
     def test_quast_from_1_large_wsobj(self):
         self.start_test()
@@ -411,21 +383,6 @@ class kb_quastTest(unittest.TestCase):
                                                  'force_glimmer': True})[0]
         self.check_quast_app_output(ret, 315170, 315200, '6aae4f232d4d011210eca1965093c22d',
                                     '2010dc270160ee661d76dad6051cda32', skip_glimmer=False)
-
-    def test_quast_app_force_skip_glimmer(self):
-        self.start_test()
-        tf = 'greengenes_UnAligSeq24606_edit1.fa'
-        target = os.path.join(self.scratch, tf)
-        shutil.copy('data/' + tf, target)
-        ref = self.au.save_assembly_from_fasta(
-            {'file': {'path': target},
-             'workspace_name': self.ws_info[1],
-             'assembly_name': 'assy1'})
-        ret = self.impl.run_QUAST_app(self.ctx, {'assemblies': [ref],
-                                                 'workspace_name': self.ws_info[1],
-                                                 'force_skip_glimmer': True})[0]
-        self.check_quast_app_output(ret, 315170, 315200, '6aae4f232d4d011210eca1965093c22d',
-                                    '2010dc270160ee661d76dad6051cda32', skip_glimmer=True)
 
     def test_fail_app_no_workspace(self):
         self.start_test()
