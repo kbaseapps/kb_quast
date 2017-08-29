@@ -24,6 +24,10 @@ parameters :
         ui-name : Assemblies
         short-hint : Assembly objects to be analyzed by QUAST.
 
+    force_glimmer:
+        ui-name : Force Gene Calls For Large Assemblies
+        short-hint : Force using '--glimmer' option
+
 description : |
     <p>
     This is a KBase wrapper for version 4.4 of the 

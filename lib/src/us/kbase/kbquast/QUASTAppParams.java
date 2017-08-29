@@ -18,6 +18,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * Input for running QUAST as a Narrative application.
  * workspace_name - the name of the workspace where the KBaseReport object will be saved.
  * assemblies - the list of assemblies upon which QUAST will be run.
+ * force_glimmer - running '--glimmer' option regardless of assembly object size
  * </pre>
  * 
  */
@@ -25,7 +26,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @Generated("com.googlecode.jsonschema2pojo")
 @JsonPropertyOrder({
     "workspace_name",
-    "assemblies"
+    "assemblies",
+    "force_glimmer"
 })
 public class QUASTAppParams {
 
@@ -33,6 +35,8 @@ public class QUASTAppParams {
     private java.lang.String workspaceName;
     @JsonProperty("assemblies")
     private List<String> assemblies;
+    @JsonProperty("force_glimmer")
+    private Long forceGlimmer;
     private Map<java.lang.String, Object> additionalProperties = new HashMap<java.lang.String, Object>();
 
     @JsonProperty("workspace_name")
@@ -65,6 +69,21 @@ public class QUASTAppParams {
         return this;
     }
 
+    @JsonProperty("force_glimmer")
+    public Long getForceGlimmer() {
+        return forceGlimmer;
+    }
+
+    @JsonProperty("force_glimmer")
+    public void setForceGlimmer(Long forceGlimmer) {
+        this.forceGlimmer = forceGlimmer;
+    }
+
+    public QUASTAppParams withForceGlimmer(Long forceGlimmer) {
+        this.forceGlimmer = forceGlimmer;
+        return this;
+    }
+
     @JsonAnyGetter
     public Map<java.lang.String, Object> getAdditionalProperties() {
         return this.additionalProperties;
@@ -77,7 +96,7 @@ public class QUASTAppParams {
 
     @Override
     public java.lang.String toString() {
-        return ((((((("QUASTAppParams"+" [workspaceName=")+ workspaceName)+", assemblies=")+ assemblies)+", additionalProperties=")+ additionalProperties)+"]");
+        return ((((((((("QUASTAppParams"+" [workspaceName=")+ workspaceName)+", assemblies=")+ assemblies)+", forceGlimmer=")+ forceGlimmer)+", additionalProperties=")+ additionalProperties)+"]");
     }
 
 }

@@ -45,10 +45,12 @@ module kb_quast {
 	/* Input for running QUAST as a Narrative application.
 		workspace_name - the name of the workspace where the KBaseReport object will be saved.
 		assemblies - the list of assemblies upon which QUAST will be run.
+		force_glimmer - running '--glimmer' option regardless of assembly object size
 	*/
 	typedef structure {
 		string workspace_name;
 		list<assembly_ref> assemblies;
+		boolean force_glimmer;
 	} QUASTAppParams;
 	
 	/* Output of the run_quast_app function.
@@ -71,11 +73,13 @@ module kb_quast {
 		
 		Optional arguments:
 		make_handle - create a handle for the new shock node for the report.
+		force_glimmer - running '--glimmer' option regardless of file/assembly object size
 	*/
 	typedef structure {
 		list<assembly_ref> assemblies;
 		list<FASTAFile> files;
 		boolean make_handle;
+		boolean force_glimmer;
 	} QUASTParams;
 	
 	/* Ouput of the run_quast function.
