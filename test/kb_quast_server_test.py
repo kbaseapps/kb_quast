@@ -103,7 +103,7 @@ class kb_quastTest(unittest.TestCase):
 
 # ***** quast as local method tests ************************   
     
-    @patch.object(kb_quast, "TEN_MB", new=10)
+    @patch.object(kb_quast, "TWENTY_MB", new=10)
     def test_check_large_input(self):
         self.start_test()
 
@@ -114,20 +114,20 @@ class kb_quastTest(unittest.TestCase):
         large_file_name = 'large_file.fa'
         large_file_path = os.path.join(file_dir, large_file_name)
 
-        size_fake_10MB = 10
+        size_fake_20MB = 10
 
-        # writing exactly TEN_MB base count indicators
+        # writing exactly TWENTY_MB base count
         with open(large_file_path, "ab") as output:
-            content = '\n'.join(['>'] * size_fake_10MB)
+            content = '>test_seq\n{}'.format('A' * size_fake_20MB)
             output.write(content)
 
         skip_glimmer = self.impl.check_large_input([large_file_path])
 
         self.assertFalse(skip_glimmer)    
 
-        # writing exactly TEN_MB + 1 base count indicators
+        # writing exactly TWENTY_MB + 1 base count
         with open(large_file_path, "ab") as output:
-            content = '\n>'
+            content = 'A'
             output.write(content)
 
         skip_glimmer = self.impl.check_large_input([large_file_path])
@@ -166,7 +166,7 @@ class kb_quastTest(unittest.TestCase):
         self.check_quast_output(ret, 324600, 324740, 'b45307b9bed53de2fa0d0b9780be3faf',
                                 '862913a9383b42d0f0fb95beb113296f')
 
-    @patch.object(kb_quast, "TEN_MB", new=10)
+    @patch.object(kb_quast, "TWENTY_MB", new=10)
     def test_quast_large_file(self):
         self.start_test()
 
@@ -178,7 +178,7 @@ class kb_quastTest(unittest.TestCase):
         self.check_quast_output(ret, 320810, 320860, 'e8c7d24f35a8c3feb1da4c58623ad277',
                                 '862913a9383b42d0f0fb95beb113296f', skip_glimmer=True)
 
-    @patch.object(kb_quast, "TEN_MB", new=10)
+    @patch.object(kb_quast, "TWENTY_MB", new=10)
     def test_quast_large_file_force_glimmer(self):
         self.start_test()
         ret = self.impl.run_QUAST(self.ctx, {'files': [
@@ -229,7 +229,7 @@ class kb_quastTest(unittest.TestCase):
         self.check_quast_output(ret, 320800, 320950, '5648903ef181d4ab189a206f6be28c47',
                                 'f48d2c38619ef93ae8972ce4e6ebcbf4')
 
-    @patch.object(kb_quast, "TEN_MB", new=10)
+    @patch.object(kb_quast, "TWENTY_MB", new=10)
     def test_quast_from_1_large_wsobj(self):
         self.start_test()
         tf = 'greengenes_UnAligSeq24606_edit1.fa'
@@ -243,7 +243,7 @@ class kb_quastTest(unittest.TestCase):
         self.check_quast_output(ret, 312770, 312790, '26876f8e773af163cf0e2518bbd28ab7',
                                 '2010dc270160ee661d76dad6051cda32', skip_glimmer=True)
 
-    @patch.object(kb_quast, "TEN_MB", new=10)
+    @patch.object(kb_quast, "TWENTY_MB", new=10)
     def test_quast_from_1_large_wsobj_force_glimmer(self):
         self.start_test()
         tf = 'greengenes_UnAligSeq24606_edit1.fa'
@@ -353,7 +353,7 @@ class kb_quastTest(unittest.TestCase):
         self.check_quast_app_output(ret, 315170, 315200, '6aae4f232d4d011210eca1965093c22d',
                                     '2010dc270160ee661d76dad6051cda32')
 
-    @patch.object(kb_quast, "TEN_MB", new=10)
+    @patch.object(kb_quast, "TWENTY_MB", new=10)
     def test_quast_app_large_object(self):
         self.start_test()
         tf = 'greengenes_UnAligSeq24606_edit1.fa'
@@ -368,7 +368,7 @@ class kb_quastTest(unittest.TestCase):
         self.check_quast_app_output(ret, 312760, 312790, '26876f8e773af163cf0e2518bbd28ab7',
                                     '2010dc270160ee661d76dad6051cda32', skip_glimmer=True)
 
-    @patch.object(kb_quast, "TEN_MB", new=10)
+    @patch.object(kb_quast, "TWENTY_MB", new=10)
     def test_quast_app_large_object_force_glimmer(self):
         self.start_test()
         tf = 'greengenes_UnAligSeq24606_edit1.fa'

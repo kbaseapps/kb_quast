@@ -59,7 +59,7 @@ stored in a zip file in Shock.
     #BEGIN_CLASS_HEADER
 
     THREADS_PER_CORE = 1
-    TEN_MB = 10 * 1024 * 1024
+    TWENTY_MB = 20 * 1024 * 1024
 
     def log(self, message, prefix_newline=False):
         print(('\n' if prefix_newline else '') + str(_time.time()) + ': ' + message)
@@ -145,12 +145,13 @@ stored in a zip file in Shock.
 
     def check_large_input(self, filepaths):
         skip_glimmer = False
-
+        basecount = 0
         for filepath in filepaths:
-            basecount = len(list(_SeqIO.parse(filepath, 'fasta')))
-            if basecount > self.TEN_MB:
-                skip_glimmer = True
-                break
+            for record in _SeqIO.parse(filepath, 'fasta'):
+                basecount += len(record.seq)
+
+        if basecount > self.TWENTY_MB:
+            skip_glimmer = True
 
         return skip_glimmer
 
