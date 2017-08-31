@@ -26,7 +26,7 @@ parameters :
 
     force_glimmer:
         ui-name : Force Gene Calls For Large Assemblies
-        short-hint : Force using '--glimmer' option
+        short-hint : Force using '--glimmer' option. If this is not selected, app will not use '--glimmer' option for all files if total contig length exceeds 20 million.
 
 description : |
     <p>
