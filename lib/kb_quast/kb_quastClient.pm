@@ -82,20 +82,19 @@ sub new
     # We create an auth token, passing through the arguments that we were (hopefully) given.
 
     {
-	my $token = Bio::KBase::AuthToken->new(@args);
-	
-	if (!$token->error_message)
-	{
-	    $self->{token} = $token->token;
-	    $self->{client}->{token} = $token->token;
+	my %arg_hash2 = @args;
+	if (exists $arg_hash2{"token"}) {
+	    $self->{token} = $arg_hash2{"token"};
+	} elsif (exists $arg_hash2{"user_id"}) {
+	    my $token = Bio::KBase::AuthToken->new(@args);
+	    if (!$token->error_message) {
+	        $self->{token} = $token->token;
+	    }
 	}
-        else
-        {
-	    #
-	    # All methods in this module require authentication. In this case, if we
-	    # don't have a token, we can't continue.
-	    #
-	    die "Authentication failed: " . $token->error_message;
+	
+	if (exists $self->{token})
+	{
+	    $self->{client}->{token} = $self->{token};
 	}
     }
 
@@ -126,7 +125,9 @@ $output is a kb_quast.QUASTAppOutput
 QUASTAppParams is a reference to a hash where the following keys are defined:
 	workspace_name has a value which is a string
 	assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
+	force_glimmer has a value which is a kb_quast.boolean
 assembly_ref is a string
+boolean is an int
 QUASTAppOutput is a reference to a hash where the following keys are defined:
 	report_name has a value which is a string
 	report_ref has a value which is a string
@@ -142,7 +143,9 @@ $output is a kb_quast.QUASTAppOutput
 QUASTAppParams is a reference to a hash where the following keys are defined:
 	workspace_name has a value which is a string
 	assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
+	force_glimmer has a value which is a kb_quast.boolean
 assembly_ref is a string
+boolean is an int
 QUASTAppOutput is a reference to a hash where the following keys are defined:
 	report_name has a value which is a string
 	report_ref has a value which is a string
@@ -223,6 +226,7 @@ QUASTParams is a reference to a hash where the following keys are defined:
 	assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
 	files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
 	make_handle has a value which is a kb_quast.boolean
+	force_glimmer has a value which is a kb_quast.boolean
 assembly_ref is a string
 FASTAFile is a reference to a hash where the following keys are defined:
 	path has a value which is a string
@@ -254,6 +258,7 @@ QUASTParams is a reference to a hash where the following keys are defined:
 	assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
 	files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
 	make_handle has a value which is a kb_quast.boolean
+	force_glimmer has a value which is a kb_quast.boolean
 assembly_ref is a string
 FASTAFile is a reference to a hash where the following keys are defined:
 	path has a value which is a string
@@ -585,6 +590,7 @@ label has a value which is a string
 Input for running QUAST as a Narrative application.
 workspace_name - the name of the workspace where the KBaseReport object will be saved.
 assemblies - the list of assemblies upon which QUAST will be run.
+force_glimmer - running '--glimmer' option regardless of assembly object size
 
 
 =item Definition
@@ -595,6 +601,7 @@ assemblies - the list of assemblies upon which QUAST will be run.
 a reference to a hash where the following keys are defined:
 workspace_name has a value which is a string
 assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
+force_glimmer has a value which is a kb_quast.boolean
 
 </pre>
 
@@ -605,6 +612,7 @@ assemblies has a value which is a reference to a list where each element is a kb
 a reference to a hash where the following keys are defined:
 workspace_name has a value which is a string
 assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
+force_glimmer has a value which is a kb_quast.boolean
 
 
 =end text
@@ -667,6 +675,7 @@ files - the list of FASTA files upon which QUAST will be run.
 
 Optional arguments:
 make_handle - create a handle for the new shock node for the report.
+force_glimmer - running '--glimmer' option regardless of file/assembly object size
 
 
 =item Definition
@@ -678,6 +687,7 @@ a reference to a hash where the following keys are defined:
 assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
 files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
 make_handle has a value which is a kb_quast.boolean
+force_glimmer has a value which is a kb_quast.boolean
 
 </pre>
 
@@ -689,6 +699,7 @@ a reference to a hash where the following keys are defined:
 assemblies has a value which is a reference to a list where each element is a kb_quast.assembly_ref
 files has a value which is a reference to a list where each element is a kb_quast.FASTAFile
 make_handle has a value which is a kb_quast.boolean
+force_glimmer has a value which is a kb_quast.boolean
 
 
 =end text

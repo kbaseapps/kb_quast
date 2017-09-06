@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * files - the list of FASTA files upon which QUAST will be run.
  * Optional arguments:
  * make_handle - create a handle for the new shock node for the report.
+ * force_glimmer - running '--glimmer' option regardless of file/assembly object size
  * </pre>
  * 
  */
@@ -29,7 +30,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder({
     "assemblies",
     "files",
-    "make_handle"
+    "make_handle",
+    "force_glimmer"
 })
 public class QUASTParams {
 
@@ -39,6 +41,8 @@ public class QUASTParams {
     private List<FASTAFile> files;
     @JsonProperty("make_handle")
     private Long makeHandle;
+    @JsonProperty("force_glimmer")
+    private Long forceGlimmer;
     private Map<java.lang.String, Object> additionalProperties = new HashMap<java.lang.String, Object>();
 
     @JsonProperty("assemblies")
@@ -86,6 +90,21 @@ public class QUASTParams {
         return this;
     }
 
+    @JsonProperty("force_glimmer")
+    public Long getForceGlimmer() {
+        return forceGlimmer;
+    }
+
+    @JsonProperty("force_glimmer")
+    public void setForceGlimmer(Long forceGlimmer) {
+        this.forceGlimmer = forceGlimmer;
+    }
+
+    public QUASTParams withForceGlimmer(Long forceGlimmer) {
+        this.forceGlimmer = forceGlimmer;
+        return this;
+    }
+
     @JsonAnyGetter
     public Map<java.lang.String, Object> getAdditionalProperties() {
         return this.additionalProperties;
@@ -98,7 +117,7 @@ public class QUASTParams {
 
     @Override
     public java.lang.String toString() {
-        return ((((((((("QUASTParams"+" [assemblies=")+ assemblies)+", files=")+ files)+", makeHandle=")+ makeHandle)+", additionalProperties=")+ additionalProperties)+"]");
+        return ((((((((((("QUASTParams"+" [assemblies=")+ assemblies)+", files=")+ files)+", makeHandle=")+ makeHandle)+", forceGlimmer=")+ forceGlimmer)+", additionalProperties=")+ additionalProperties)+"]");
     }
 
 }
