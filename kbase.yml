@@ -4,15 +4,14 @@ module-name:
 module-description: |
     Wrapper for QUAST (http://quast.sourceforge.net/).
 
-    From the QUAST site: QUAST stands for QUality ASsessment Tool. The tool evaluates genome 
-    assemblies by computing various metrics. 
+    From the QUAST site: QUAST stands for QUality ASsessment Tool. The tool evaluates genome
+    assemblies by computing various metrics.
 
 service-language:
     python
 
 module-version:
-    0.0.4
+    0.0.5
 
 owners:
     [gaprice]
-

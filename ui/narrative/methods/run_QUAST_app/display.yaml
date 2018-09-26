@@ -30,19 +30,19 @@ parameters :
 
 description : |
     <p>
-    This is a KBase wrapper for version 4.4 of the 
-    <a href="http://quast.sourceforge.net/" target="_blank">QUAST</a> 
-    assembly quality assessment tool. 
+    This is a KBase wrapper for version 4.4 of the
+    <a href="http://quast.sourceforge.net/" target="_blank">QUAST</a>
+    assembly quality assessment tool.
     </p>
 
-publications: 
+publications:
     -
         display-text: |
-            Alexey Gurevich, Vladislav Saveliev, Nikolay Vyahhi and Glenn Tesler, QUAST: quality assessment tool for genome assemblies, Bioinformatics (2013) 29 (8): 1072-1075. doi: 10.1093/bioinformatics/btt086 First published online: February 19, 2013
+            Gurevich A, Saveliev V, Vyahhi N, Tesler G. QUAST: quality assessment tool for genome assemblies. Bioinformatics. 2013;29: 1072–1075. doi:10.1093/bioinformatics/btt086
         link: https://www.ncbi.nlm.nih.gov/pubmed/23422339
         pmid: 23422339
     -
         display-text: |
-            Alla Mikheenko, Gleb Valin, Andrey Prjibelski, Vladislav Saveliev, Alexey Gurevich, Icarus: visualizer for de novo assembly evaluation, Bioinformatics (2016). doi: 10.1093/bioinformatics/btw379 First published online: July 4, 2016
+            Mikheenko A, Valin G, Prjibelski A, Saveliev V, Gurevich A. Icarus: visualizer for de novo assembly evaluation. Bioinformatics. 2016;32: 3321–3323. doi:10.1093/bioinformatics/btw379
         link: https://www.ncbi.nlm.nih.gov/pubmed/27378299
         pmid: 27378299
