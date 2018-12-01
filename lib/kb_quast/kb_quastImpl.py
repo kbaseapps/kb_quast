@@ -52,8 +52,8 @@ stored in a zip file in Shock.
     # state. A method could easily clobber the state set by another while
     # the latter method is running.
     ######################################### noqa
-    VERSION = "0.0.4"
-    GIT_URL = "https://github.com/Tianhao-Gu/kb_quast.git"
+    VERSION = "0.0.5"
+    GIT_URL = "https://github.com/kbaseapps/kb_quast.git"
     GIT_COMMIT_HASH = "7a6159e54613546d5a3a36fc9b146c3e146ac2fa"
 
     #BEGIN_CLASS_HEADER
