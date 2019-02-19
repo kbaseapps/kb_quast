@@ -1,6 +1,6 @@
 name     : QUAST - Quality Assessment Tool for Genome Assemblies
-subtitle : Run QUAST on a set of assemblies to assess quality.
-tooltip  : Run QUAST on a set of assemblies to assess quality.
+subtitle : Run QUAST(v5.0.2) on a set of assemblies to assess quality.
+tooltip  : Run QUAST(v5.0.2) on a set of assemblies to assess quality.
 
 screenshots :
     []
@@ -30,7 +30,7 @@ parameters :
 
 description : |
     <p>
-    This is a KBase wrapper for version 4.4 of the
+    This is a KBase wrapper for version 5.0.2 of the
     <a href="http://quast.sourceforge.net/" target="_blank">QUAST</a>
     assembly quality assessment tool.
     </p>

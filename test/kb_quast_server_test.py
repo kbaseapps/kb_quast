@@ -1,30 +1,27 @@
 # -*- coding: utf-8 -*-
-import unittest
-import os  # noqa: F401
-import time
-import requests
-
-from os import environ
-from mock import patch
-import shutil
-import uuid
 import hashlib
 import inspect
-try:
-    from ConfigParser import ConfigParser  # py2 @UnusedImport
-except:
-    from configparser import ConfigParser  # py3 @UnresolvedImport @Reimport
+import os  # noqa: F401
+import shutil
+import time
+import unittest
+import uuid
+from configparser import ConfigParser  # py3 @UnresolvedImport @Reimport
+from os import environ
+from unittest.mock import patch
 
-from Workspace.WorkspaceClient import Workspace
-from Workspace.baseclient import ServerError as WorkspaceError
-from AbstractHandle.AbstractHandleClient import AbstractHandle as HandleService
-from DataFileUtil.DataFileUtilClient import DataFileUtil
-from AssemblyUtil.AssemblyUtilClient import AssemblyUtil
-from AssemblyUtil.baseclient import ServerError as AssemblyError
-from KBaseReport.baseclient import ServerError as KBRError
+import requests
+
+from installed_clients.AbstractHandleClient import AbstractHandle as HandleService
+from installed_clients.AssemblyUtilClient import AssemblyUtil
+from installed_clients.DataFileUtilClient import DataFileUtil
+from installed_clients.WorkspaceClient import Workspace
+from installed_clients.baseclient import ServerError as AssemblyError
+from installed_clients.baseclient import ServerError as KBRError
+from installed_clients.baseclient import ServerError as WorkspaceError
+from kb_quast.authclient import KBaseAuth as _KBaseAuth
 from kb_quast.kb_quastImpl import kb_quast
 from kb_quast.kb_quastServer import MethodContext
-from kb_quast.authclient import KBaseAuth as _KBaseAuth
 
 
 class kb_quastTest(unittest.TestCase):
@@ -117,7 +114,7 @@ class kb_quastTest(unittest.TestCase):
         size_fake_20MB = 10
 
         # writing exactly TWENTY_MB base count
-        with open(large_file_path, "ab") as output:
+        with open(large_file_path, "a") as output:
             content = '>test_seq\n{}'.format('A' * size_fake_20MB)
             output.write(content)
 
@@ -126,7 +123,7 @@ class kb_quastTest(unittest.TestCase):
         self.assertFalse(skip_glimmer)    
 
         # writing exactly TWENTY_MB + 1 base count
-        with open(large_file_path, "ab") as output:
+        with open(large_file_path, "a") as output:
             content = 'A'
             output.write(content)
 
@@ -141,21 +138,21 @@ class kb_quastTest(unittest.TestCase):
         ret = self.impl.run_QUAST(self.ctx, {'files': [
             {'path': 'data/greengenes_UnAligSeq24606.fa', 'label': 'foobar'}],
             'make_handle': 1})[0]
-        self.check_quast_output(ret, 315250, 315280, '51b78e4ff2ff7a2f864769ff02d95f92',
-                                'dff937c5ed36a38345d057ea0b5c3e9e')
+        self.check_quast_output(ret, 329105, 'a8ee2a3d96a3857105987c960185f307',
+                                '6522bf4c7a54f96b99f7097c1a6afb01')
 
     def test_quast_no_handle(self):
         self.start_test()
         ret = self.impl.run_QUAST(self.ctx, {'files': [
             {'path': 'data/greengenes_UnAligSeq24606.fa', 'label': 'foobar'}],
             'make_handle': 0})[0]
-        self.check_quast_output(ret, 315250, 315280, '51b78e4ff2ff7a2f864769ff02d95f92',
-                                'dff937c5ed36a38345d057ea0b5c3e9e', no_handle=True)
+        self.check_quast_output(ret, 329100, 'a8ee2a3d96a3857105987c960185f307',
+                                '6522bf4c7a54f96b99f7097c1a6afb01', no_handle=True)
 
         ret = self.impl.run_QUAST(self.ctx, {'files': [
             {'path': 'data/greengenes_UnAligSeq24606.fa', 'label': 'foobar'}]})[0]
-        self.check_quast_output(ret, 315250, 315280, '51b78e4ff2ff7a2f864769ff02d95f92',
-                                'dff937c5ed36a38345d057ea0b5c3e9e', no_handle=True)
+        self.check_quast_output(ret, 329100, 'a8ee2a3d96a3857105987c960185f307',
+                                '6522bf4c7a54f96b99f7097c1a6afb01', no_handle=True)
 
     def test_quast_from_2_files(self):
         self.start_test()
@@ -163,8 +160,8 @@ class kb_quastTest(unittest.TestCase):
             {'path': 'data/greengenes_UnAligSeq24606.fa', 'label': 'foo'},
             {'path': 'data/greengenes_UnAligSeq24606_edit1.fa'}],
             'make_handle': 1})[0]
-        self.check_quast_output(ret, 324600, 324740, 'b45307b9bed53de2fa0d0b9780be3faf',
-                                '862913a9383b42d0f0fb95beb113296f')
+        self.check_quast_output(ret, 349155, '365aa50eda257a514b7fbae4edfba0a7',
+                                '2d10706f4ecfdbbe6d5d86e8578adbfa')
 
     @patch.object(kb_quast, "TWENTY_MB", new=10)
     def test_quast_large_file(self):
@@ -175,8 +172,8 @@ class kb_quastTest(unittest.TestCase):
             {'path': 'data/greengenes_UnAligSeq24606_edit1.fa'}],
             'make_handle': 1})[0]
 
-        self.check_quast_output(ret, 320810, 320860, 'e8c7d24f35a8c3feb1da4c58623ad277',
-                                '862913a9383b42d0f0fb95beb113296f', skip_glimmer=True)
+        self.check_quast_output(ret, 345220, 'e8c7d24f35a8c3feb1da4c58623ad277',
+                                '2d10706f4ecfdbbe6d5d86e8578adbfa', skip_glimmer=True)
 
     @patch.object(kb_quast, "TWENTY_MB", new=10)
     def test_quast_large_file_force_glimmer(self):
@@ -186,8 +183,8 @@ class kb_quastTest(unittest.TestCase):
             {'path': 'data/greengenes_UnAligSeq24606_edit1.fa'}],
             'make_handle': 1,
             'force_glimmer': True})[0]
-        self.check_quast_output(ret, 324600, 324740, 'b45307b9bed53de2fa0d0b9780be3faf',
-                                '862913a9383b42d0f0fb95beb113296f', skip_glimmer=False)
+        self.check_quast_output(ret, 349150, '365aa50eda257a514b7fbae4edfba0a7',
+                                '2d10706f4ecfdbbe6d5d86e8578adbfa', skip_glimmer=False)
 
     def test_quast_from_1_wsobj(self):
         self.start_test()
@@ -199,8 +196,8 @@ class kb_quastTest(unittest.TestCase):
              'workspace_name': self.ws_info[1],
              'assembly_name': 'assy1'})
         ret = self.impl.run_QUAST(self.ctx, {'assemblies': [ref], 'make_handle': 1})[0]
-        self.check_quast_output(ret, 315180, 315200, '6aae4f232d4d011210eca1965093c22d',
-                                '2010dc270160ee661d76dad6051cda32')
+        self.check_quast_output(ret, 328570, 'f8a8b01c9939614b50381d9a760c3ee4',
+                                '140133e21ce35277cb7adc2eed2b1fd5')
 
     def test_quast_from_2_wsobj(self):
         self.start_test()
@@ -226,8 +223,8 @@ class kb_quastTest(unittest.TestCase):
         wsref2 = str(objs[1][7] + '/' + str(objs[1][1]))
 
         ret = self.impl.run_QUAST(self.ctx, {'assemblies': [wsref1, wsref2], 'make_handle': 1})[0]
-        self.check_quast_output(ret, 320800, 320950, '5648903ef181d4ab189a206f6be28c47',
-                                'f48d2c38619ef93ae8972ce4e6ebcbf4')
+        self.check_quast_output(ret, 344240, 'a44837b572fd48e6cd4179399b9aacd7',
+                                '3e2d94fb1d29d48c3058f8cbb68674ae')
 
     @patch.object(kb_quast, "TWENTY_MB", new=10)
     def test_quast_from_1_large_wsobj(self):
@@ -240,8 +237,8 @@ class kb_quastTest(unittest.TestCase):
              'workspace_name': self.ws_info[1],
              'assembly_name': 'assy1'})
         ret = self.impl.run_QUAST(self.ctx, {'assemblies': [ref], 'make_handle': 1})[0]
-        self.check_quast_output(ret, 312770, 312790, '26876f8e773af163cf0e2518bbd28ab7',
-                                '2010dc270160ee661d76dad6051cda32', skip_glimmer=True)
+        self.check_quast_output(ret, 326336, '26876f8e773af163cf0e2518bbd28ab7',
+                                '140133e21ce35277cb7adc2eed2b1fd5', skip_glimmer=True)
 
     @patch.object(kb_quast, "TWENTY_MB", new=10)
     def test_quast_from_1_large_wsobj_force_glimmer(self):
@@ -255,8 +252,8 @@ class kb_quastTest(unittest.TestCase):
              'assembly_name': 'assy1'})
         ret = self.impl.run_QUAST(self.ctx, {'assemblies': [ref], 'make_handle': 1, 
                                              'force_glimmer': True})[0]
-        self.check_quast_output(ret, 315180, 315200, '6aae4f232d4d011210eca1965093c22d',
-                                '2010dc270160ee661d76dad6051cda32', skip_glimmer=False)
+        self.check_quast_output(ret, 328567, 'f8a8b01c9939614b50381d9a760c3ee4',
+                                '140133e21ce35277cb7adc2eed2b1fd5', skip_glimmer=False)
 
     def test_fail_no_input(self):
         self.start_test()
@@ -292,7 +289,7 @@ class kb_quastTest(unittest.TestCase):
         self.fail_quast(
             {'files': [{'path': 'data/greengenes_UnAligSeq24606.fa'},
                        {'path': 'data/greengenes_UnAligSeq24606_garbage.fa'}]},
-            'QUAST skipped some files - 2 expected, 1 processed.')
+            "'utf-8' codec can't decode byte 0x8b in position 1: invalid start byte")
 
     def test_fail_bad_ws_ref(self):
         self.start_test()
@@ -300,7 +297,7 @@ class kb_quastTest(unittest.TestCase):
             {'assemblies': [str(self.ws_info[0]) + '/999999999999/999999']},
             'No object with id 999999999999 exists in workspace {} (name {})'.format(
                 self.ws_info[0], self.ws_info[1]),
-            exception=WorkspaceError)
+            exception=WorkspaceError, contains=True)
 
     def test_fail_bad_ws_type(self):
         self.start_test()
@@ -317,7 +314,7 @@ class kb_quastTest(unittest.TestCase):
             {'assemblies': [bad_object_ref]},
             "Cannot write data to fasta; invalid WS type ({}).  ".format(bo_type) +
             "Supported types are KBaseGenomes.ContigSet and KBaseGenomeAnnotations.Assembly",
-            exception=AssemblyError)
+            exception=AssemblyError, contains=True)
 
     def test_fail_duplicate_objects(self):
         self.start_test()
@@ -350,8 +347,8 @@ class kb_quastTest(unittest.TestCase):
              'assembly_name': 'assy1'})
         ret = self.impl.run_QUAST_app(self.ctx, {'assemblies': [ref],
                                                  'workspace_name': self.ws_info[1]})[0]
-        self.check_quast_app_output(ret, 315170, 315200, '6aae4f232d4d011210eca1965093c22d',
-                                    '2010dc270160ee661d76dad6051cda32')
+        self.check_quast_app_output(ret, 328570, 'f8a8b01c9939614b50381d9a760c3ee4',
+                                    '140133e21ce35277cb7adc2eed2b1fd5')
 
     @patch.object(kb_quast, "TWENTY_MB", new=10)
     def test_quast_app_large_object(self):
@@ -365,8 +362,8 @@ class kb_quastTest(unittest.TestCase):
              'assembly_name': 'assy1'})
         ret = self.impl.run_QUAST_app(self.ctx, {'assemblies': [ref],
                                                  'workspace_name': self.ws_info[1]})[0]
-        self.check_quast_app_output(ret, 312760, 312790, '26876f8e773af163cf0e2518bbd28ab7',
-                                    '2010dc270160ee661d76dad6051cda32', skip_glimmer=True)
+        self.check_quast_app_output(ret, 326340, '26876f8e773af163cf0e2518bbd28ab7',
+                                    '140133e21ce35277cb7adc2eed2b1fd5', skip_glimmer=True)
 
     @patch.object(kb_quast, "TWENTY_MB", new=10)
     def test_quast_app_large_object_force_glimmer(self):
@@ -381,8 +378,8 @@ class kb_quastTest(unittest.TestCase):
         ret = self.impl.run_QUAST_app(self.ctx, {'assemblies': [ref],
                                                  'workspace_name': self.ws_info[1],
                                                  'force_glimmer': True})[0]
-        self.check_quast_app_output(ret, 315170, 315200, '6aae4f232d4d011210eca1965093c22d',
-                                    '2010dc270160ee661d76dad6051cda32', skip_glimmer=False)
+        self.check_quast_app_output(ret, 328560, 'f8a8b01c9939614b50381d9a760c3ee4',
+                                    '140133e21ce35277cb7adc2eed2b1fd5', skip_glimmer=False)
 
     def test_fail_app_no_workspace(self):
         self.start_test()
@@ -425,24 +422,30 @@ class kb_quastTest(unittest.TestCase):
         with self.assertRaises(exception) as context:
             self.impl.run_QUAST_app(self.ctx, params)
         if contains:
-            self.assertIn(error, str(context.exception.message))
+            self.assertIn(error, str(context.exception))
         else:
-            self.assertEqual(error, str(context.exception.message))
+            self.assertEqual(error, str(context.exception))
 
-    def fail_quast(self, params, error, exception=ValueError):
+    def fail_quast(self, params, error, exception=ValueError, contains=True):
         with self.assertRaises(exception) as context:
             self.impl.run_QUAST(self.ctx, params)
-        self.assertEqual(error, str(context.exception.message))
+        print(context.exception)
+        if contains:
+            self.assertIn(error, str(context.exception))
+        else:
+            self.assertEqual(error, str(context.exception))
 
-    def check_quast_app_output(self, ret, minsize, maxsize, repttxtmd5, icarusmd5, 
-                               skip_glimmer=False):
+    def check_quast_app_output(self, ret, size, repttxtmd5, icarusmd5,
+                               skip_glimmer=False, tolerance=15):
+        minsize = size - tolerance
+        maxsize = size + tolerance
         filename = 'quast_results.zip'
 
         ref = ret['report_ref']
         objname = ret['report_name']
         obj = self.dfu.get_objects(
             {'object_refs': [ref]})['data'][0]
-        print obj
+        print(obj)
         d = obj['data']
         links = d['html_links']
         self.assertEqual(len(links), 1)
@@ -452,7 +455,7 @@ class kb_quastTest(unittest.TestCase):
         self.nodes_to_delete.append(shocknode)
 
         self.assertEqual(objname, obj['info'][1])
-        rmd5 = hashlib.md5(d['text_message']).hexdigest()
+        rmd5 = hashlib.md5(d['text_message'].encode()).hexdigest()
         self.assertEqual(d['direct_html_link_index'], 0)
         self.assertEqual(rmd5, repttxtmd5)
         self.assertEqual(links[0]['name'], 'report.html')
@@ -467,7 +470,7 @@ class kb_quastTest(unittest.TestCase):
         self.assertLess(shockfile['size'], maxsize)
 
         handleret = self.hs.hids_to_handles([hid])[0]
-        print handleret
+        print(handleret)
         self.assertEqual(handleret['url'], self.shockURL)
         self.assertEqual(handleret['hid'], hid)
 #         self.assertEqual(handleret['file_name'], filename)  # KBR doesn't set
@@ -485,19 +488,21 @@ class kb_quastTest(unittest.TestCase):
              })
         rmd5 = hashlib.md5(open(os.path.join(zipdir, 'report.txt'), 'rb')
                            .read()).hexdigest()
-        self.assertEquals(rmd5, repttxtmd5)
+        self.assertEqual(rmd5, repttxtmd5)
         imd5 = hashlib.md5(open(os.path.join(zipdir, 'icarus.html'), 'rb')
                            .read()).hexdigest()
-        self.assertEquals(imd5, icarusmd5)
+        self.assertEqual(imd5, icarusmd5)
 
         result_files = os.listdir(zipdir)
         if skip_glimmer:
-            'predicted_genes' not in result_files
+            self.assertNotIn('predicted_genes', result_files)
         else:
-            'predicted_genes' in result_files
+            self.assertIn('predicted_genes', result_files)
 
-    def check_quast_output(self, ret, minsize, maxsize, repttxtmd5, icarusmd5, no_handle=False,
-                           skip_glimmer=False):
+    def check_quast_output(self, ret, size, repttxtmd5, icarusmd5, no_handle=False,
+                           skip_glimmer=False, tolerance=15):
+        minsize = size - tolerance
+        maxsize = size + tolerance
         filename = 'quast_results.zip'
 
         shocknode = ret['shock_id']
@@ -540,22 +545,22 @@ class kb_quastTest(unittest.TestCase):
              })
         rmd5 = hashlib.md5(open(os.path.join(zipdir, 'report.txt'), 'rb')
                            .read()).hexdigest()
-        self.assertEquals(rmd5, repttxtmd5)
+        self.assertEqual(rmd5, repttxtmd5)
         imd5 = hashlib.md5(open(os.path.join(zipdir, 'icarus.html'), 'rb')
                            .read()).hexdigest()
-        self.assertEquals(imd5, icarusmd5)
+        self.assertEqual(imd5, icarusmd5)
 
         # check data on disk
         rmd5 = hashlib.md5(open(os.path.join(ret['quast_path'], 'report.txt'), 'rb')
                            .read()).hexdigest()
-        self.assertEquals(rmd5, repttxtmd5)
+        self.assertEqual(rmd5, repttxtmd5)
         imd5 = hashlib.md5(open(os.path.join(ret['quast_path'], 'icarus.html'), 'rb')
                            .read()).hexdigest()
-        self.assertEquals(imd5, icarusmd5)
+        self.assertEqual(imd5, icarusmd5)
 
         # check predicted_genes directory exitance 
         result_files = os.listdir(zipdir)
         if skip_glimmer:
-            'predicted_genes' not in result_files
+            self.assertNotIn('predicted_genes', result_files)
         else:
-            'predicted_genes' in result_files
+            self.assertIn('predicted_genes', result_files)
