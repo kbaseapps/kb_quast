@@ -56,7 +56,7 @@ stored in a zip file in Shock.
     ######################################### noqa
     VERSION = "0.0.6"
     GIT_URL = "https://github.com/kbaseapps/kb_quast.git"
-    GIT_COMMIT_HASH = "d32fa3ce1643b0be4277b2be941ececf01b683cc"
+    GIT_COMMIT_HASH = "8d29af55af662fa41442c0134dd90c45decd8cf4"
 
     #BEGIN_CLASS_HEADER
 

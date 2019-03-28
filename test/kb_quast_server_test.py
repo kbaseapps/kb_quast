@@ -6,7 +6,7 @@ import shutil
 import time
 import unittest
 import uuid
-from configparser import ConfigParser  # py3 @UnresolvedImport @Reimport
+from configparser import ConfigParser
 from os import environ
 from unittest.mock import patch
 
@@ -19,7 +19,7 @@ from installed_clients.WorkspaceClient import Workspace
 from installed_clients.baseclient import ServerError as AssemblyError
 from installed_clients.baseclient import ServerError as KBRError
 from installed_clients.baseclient import ServerError as WorkspaceError
-from kb_quast.authclient import KBaseAuth as _KBaseAuth
+from installed_clients.authclient import KBaseAuth as _KBaseAuth
 from kb_quast.kb_quastImpl import kb_quast
 from kb_quast.kb_quastServer import MethodContext
 
