@@ -2,20 +2,22 @@
 #BEGIN_HEADER
 import errno as _errno
 import os as _os
-import time as _time
-import uuid as _uuid
 import subprocess as _subprocess
-from Workspace.WorkspaceClient import Workspace as _WSClient
-from Workspace.baseclient import ServerError as _WSError
-from DataFileUtil.DataFileUtilClient import DataFileUtil as _DFUClient
-from DataFileUtil.baseclient import ServerError as _DFUError
-from AssemblyUtil.AssemblyUtilClient import AssemblyUtil as _AssClient
-from AssemblyUtil.baseclient import ServerError as _AssError
-from KBaseReport.KBaseReportClient import KBaseReport as _KBRepClient
-from KBaseReport.baseclient import ServerError as _RepError
-import psutil
+import time as _time
 import uuid
+import uuid as _uuid
+
+import psutil
 from Bio import SeqIO as _SeqIO
+
+from installed_clients.AssemblyUtilClient import AssemblyUtil as _AssClient
+from installed_clients.DataFileUtilClient import DataFileUtil as _DFUClient
+from installed_clients.KBaseReportClient import KBaseReport as _KBRepClient
+from installed_clients.WorkspaceClient import Workspace as _WSClient
+from installed_clients.baseclient import ServerError as _AssError
+from installed_clients.baseclient import ServerError as _DFUError
+from installed_clients.baseclient import ServerError as _RepError
+from installed_clients.baseclient import ServerError as _WSError
 
 
 class ObjInfo(object):
@@ -52,9 +54,9 @@ stored in a zip file in Shock.
     # state. A method could easily clobber the state set by another while
     # the latter method is running.
     ######################################### noqa
-    VERSION = "0.0.4"
-    GIT_URL = "https://github.com/Tianhao-Gu/kb_quast.git"
-    GIT_COMMIT_HASH = "7a6159e54613546d5a3a36fc9b146c3e146ac2fa"
+    VERSION = "0.0.6"
+    GIT_URL = "https://github.com/kbaseapps/kb_quast.git"
+    GIT_COMMIT_HASH = "8d29af55af662fa41442c0134dd90c45decd8cf4"
 
     #BEGIN_CLASS_HEADER
 
