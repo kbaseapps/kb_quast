@@ -22,27 +22,28 @@ suggestions :
 parameters :
     assemblies :
         ui-name : Assemblies
-        short-hint : Assembly objects to be analyzed by QUAST.
+        short-hint : One or more Assemblies to be assess with QUAST.
 
     force_glimmer:
         ui-name : Force Gene Calls For Large Assemblies
-        short-hint : Force using '--glimmer' option. If this is not selected, app will not use '--glimmer' option for all files if total contig length exceeds 20 million.
+        short-hint : Force gene calls using the '--glimmer' option. If this is not selected, the App will not use '--glimmer' option for all files if the total contig length exceeds 20 million.
 
 description : |
     <p>
     This is a KBase wrapper for version 5.0.2 of the
     <a href="http://quast.sourceforge.net/" target="_blank">QUAST</a>
     assembly quality assessment tool.
+    <p>Use QUAST to assess the output assemblies from different configurations of the same assembler, or compare assemblies from multiple assemblers to determine which one is optimal for downstream analysis. The QUAST report color codes "worst, median, best" for each of the statistics generated, but pay attention to the degree of difference between the lengths and values to better understand how the parameters of your assembler relate to the resulting Assembly.</p>
     </p>
 
 publications:
     -
         display-text: |
-            Gurevich A, Saveliev V, Vyahhi N, Tesler G. QUAST: quality assessment tool for genome assemblies. Bioinformatics. 2013;29: 1072–1075. doi:10.1093/bioinformatics/btt086
+            [1] Gurevich A, Saveliev V, Vyahhi N, Tesler G. QUAST: quality assessment tool for genome assemblies. Bioinformatics. 2013;29: 1072–1075. doi:10.1093/bioinformatics/btt086
         link: https://www.ncbi.nlm.nih.gov/pubmed/23422339
         pmid: 23422339
     -
         display-text: |
-            Mikheenko A, Valin G, Prjibelski A, Saveliev V, Gurevich A. Icarus: visualizer for de novo assembly evaluation. Bioinformatics. 2016;32: 3321–3323. doi:10.1093/bioinformatics/btw379
+            [2] Mikheenko A, Valin G, Prjibelski A, Saveliev V, Gurevich A. Icarus: visualizer for de novo assembly evaluation. Bioinformatics. 2016;32: 3321–3323. doi:10.1093/bioinformatics/btw379
         link: https://www.ncbi.nlm.nih.gov/pubmed/27378299
         pmid: 27378299
