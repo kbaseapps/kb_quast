@@ -223,8 +223,9 @@ class kb_quastTest(unittest.TestCase):
         wsref2 = str(objs[1][7] + '/' + str(objs[1][1]))
 
         ret = self.impl.run_QUAST(self.ctx, {'assemblies': [wsref1, wsref2], 'make_handle': 1})[0]
-        self.check_quast_output(ret, 343977, 'a44837b572fd48e6cd4179399b9aacd7',
-                                '3e2d94fb1d29d48c3058f8cbb68674ae')
+        self.check_quast_output(
+            ret, 343977, 'a44837b572fd48e6cd4179399b9aacd7', '3e2d94fb1d29d48c3058f8cbb68674ae',
+            tolerance=30)
 
     @patch.object(kb_quast, "TWENTY_MB", new=10)
     def test_quast_from_1_large_wsobj(self):
@@ -543,19 +544,19 @@ class kb_quastTest(unittest.TestCase):
              'unpack': 'unpack',
              'file_path': os.path.join(zipdir, filename)
              })
-        rmd5 = hashlib.md5(open(os.path.join(zipdir, 'report.txt'), 'rb')
-                           .read()).hexdigest()
+        with open(os.path.join(zipdir, 'report.txt'), 'rb') as f:
+            rmd5 = hashlib.md5(f.read()).hexdigest()
         self.assertEqual(rmd5, repttxtmd5)
-        imd5 = hashlib.md5(open(os.path.join(zipdir, 'icarus.html'), 'rb')
-                           .read()).hexdigest()
+        with open(os.path.join(zipdir, 'icarus.html'), 'rb') as f:
+            imd5 = hashlib.md5(f.read()).hexdigest()
         self.assertEqual(imd5, icarusmd5)
 
         # check data on disk
-        rmd5 = hashlib.md5(open(os.path.join(ret['quast_path'], 'report.txt'), 'rb')
-                           .read()).hexdigest()
+        with open(os.path.join(ret['quast_path'], 'report.txt'), 'rb') as f:
+            rmd5 = hashlib.md5(f.read()).hexdigest()
         self.assertEqual(rmd5, repttxtmd5)
-        imd5 = hashlib.md5(open(os.path.join(ret['quast_path'], 'icarus.html'), 'rb')
-                           .read()).hexdigest()
+        with open(os.path.join(ret['quast_path'], 'icarus.html'), 'rb') as f:
+            imd5 = hashlib.md5(f.read()).hexdigest()
         self.assertEqual(imd5, icarusmd5)
 
         # check predicted_genes directory exitance 

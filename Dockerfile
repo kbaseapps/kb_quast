@@ -13,7 +13,8 @@ RUN apt-get update \
     && apt-get -y install wget \
     && apt-get -y install g++
 
-RUN pip install psutil \
+RUN python -m pip install --upgrade pip \
+    && pip install psutil \
     && pip install matplotlib
 
 # DO NOT use install_full - downloads the Silva database, which has a non open source license
