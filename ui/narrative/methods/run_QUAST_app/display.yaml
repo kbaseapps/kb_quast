@@ -28,6 +28,11 @@ parameters :
         ui-name : Force Gene Calls For Large Assemblies
         short-hint : Force gene calls using the '--glimmer' option. If this is not selected, the App will not use '--glimmer' option for all files if the total contig length exceeds 20 million.
 
+    min_contig_length:
+        ui-name: Minimum contig length
+        short-hint: | 
+          Set the minimum size of contigs to process. Defaults to 500, minimum allowed is 50.
+
 description : |
     <p>This is the KBase wrapper for version 4.4 of the <a href="http://quast.sourceforge.net/" target="_blank">QUAST</a> assembly quality assessment tool. QUAST evaluates assemblies by computing various metrics, including number of contigs, N50/75, L50/75, GC content, number of uncalled bases (N’s), and predicted genes. It takes one or more Assembly objects as input and then generates an output report with statistics for all of the input assemblies.</p>
 
