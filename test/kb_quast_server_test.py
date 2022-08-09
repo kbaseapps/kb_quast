@@ -141,6 +141,45 @@ class kb_quastTest(unittest.TestCase):
         self.check_quast_output(ret, 328982, 'a8ee2a3d96a3857105987c960185f307',
                                 '6522bf4c7a54f96b99f7097c1a6afb01')
 
+    def test_quast_min_contig_length(self):
+        self.start_test()
+        # manually checked that the min contig length was showing up in the results
+        test_params = [
+            {
+                'min_contig_length': 50,
+                'expected_size': 329830,
+                'expected_report_md5': 'dbb67e35b015c4fbc41f0b2d06472de7',
+                'expected_icarus_md5': '6522bf4c7a54f96b99f7097c1a6afb01'
+            },
+            {
+                'min_contig_length': 100,
+                'expected_size': 329868,
+                'expected_report_md5': '1ea996fa0d42cb950e7c59d7fa0207c2',
+                'expected_icarus_md5': '6522bf4c7a54f96b99f7097c1a6afb01'
+            },
+            {
+                'min_contig_length': None,
+                'expected_size': 329068,
+                'expected_report_md5': '40a90e7a8a2f7cd527ddb9d46e6918d7',
+                'expected_icarus_md5': '6522bf4c7a54f96b99f7097c1a6afb01'
+            }
+        ]
+        for p in test_params:
+            params = {
+                'files': [
+                    {
+                        'path': 'data/greengenes_UnAligSeq24606_short_seqs.fa',
+                        'label': 'foobar'
+                    }
+                ],
+                'make_handle': 1,
+                'min_contig_length': p['min_contig_length']
+            }
+            ret = self.impl.run_QUAST(self.ctx, params)[0]
+            self.check_quast_output(
+                ret, p['expected_size'], p['expected_report_md5'], p['expected_icarus_md5'])
+
+
     def test_quast_no_handle(self):
         self.start_test()
         ret = self.impl.run_QUAST(self.ctx, {'files': [
@@ -284,6 +323,23 @@ class kb_quastTest(unittest.TestCase):
         self.fail_quast(
             {'files': [{'path': 'data/greengenes_UnAligSeq24606.fa'}, {'path': 'data/foobar.fa'}]},
             'File entry 2, data/foobar.fa, is not a file')
+
+    def test_fail_bad_min_contig_length(self):
+        self.start_test()
+        test_params = {
+            'foo': 'Minimum contig length must be an integer >= 50, got: foo',
+            49: 'Minimum contig length must be an integer >= 50, got: 49',
+            0: 'Minimum contig length must be an integer >= 50, got: 0',
+            -1: 'Minimum contig length must be an integer >= 50, got: -1'
+        }
+        for mcl, exception in test_params.items():
+            self.fail_quast(
+                {
+                    'files': [{'path': 'data/greengenes_UnAligSeq24606.fa'}],
+                    'min_contig_length': mcl
+                },
+                exception,
+                contains=False)
 
     def test_fail_bad_quast_input_garbage(self):
         self.start_test()
@@ -559,7 +615,7 @@ class kb_quastTest(unittest.TestCase):
             imd5 = hashlib.md5(f.read()).hexdigest()
         self.assertEqual(imd5, icarusmd5)
 
-        # check predicted_genes directory exitance 
+        # check predicted_genes directory existance 
         result_files = os.listdir(zipdir)
         if skip_glimmer:
             self.assertNotIn('predicted_genes', result_files)

@@ -46,11 +46,14 @@ module kb_quast {
 		workspace_name - the name of the workspace where the KBaseReport object will be saved.
 		assemblies - the list of assemblies upon which QUAST will be run.
 		force_glimmer - running '--glimmer' option regardless of assembly object size
+        min_contig_length - set the minimum size of contigs to process. Defaults to 500,
+            minimum allowed is 50.
 	*/
 	typedef structure {
 		string workspace_name;
 		list<assembly_ref> assemblies;
 		boolean force_glimmer;
+        int min_contig_length;
 	} QUASTAppParams;
 	
 	/* Output of the run_quast_app function.
@@ -74,12 +77,15 @@ module kb_quast {
 		Optional arguments:
 		make_handle - create a handle for the new shock node for the report.
 		force_glimmer - running '--glimmer' option regardless of file/assembly object size
+        min_contig_length - set the minimum size of contigs to process. Defaults to 500,
+            minimum allowed is 50.
 	*/
 	typedef structure {
 		list<assembly_ref> assemblies;
 		list<FASTAFile> files;
 		boolean make_handle;
 		boolean force_glimmer;
+        int min_contig_length;
 	} QUASTParams;
 	
 	/* Ouput of the run_quast function.

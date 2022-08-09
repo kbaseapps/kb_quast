@@ -32,6 +32,18 @@
         "checked_value": 1,
         "unchecked_value": 0
     }
+  },
+  {
+    "id": "min_contig_length",
+    "optional": true,
+    "advanced": true,
+    "allow_multiple": false,
+    "default_values": [500],
+    "field_type": "text",
+    "text_options": {
+        "validate_as": "int",
+        "min_int": 50
+    }
   }],
   "behavior" : {
     "service-mapping": {
@@ -51,6 +63,10 @@
                 {
                     "input_parameter" : "force_glimmer",
                     "target_property" : "force_glimmer"
+                },
+                {
+                    "input_parameter" : "min_contig_length",
+                    "target_property" : "min_contig_length"
                 }
             ],
             "output_mapping": [

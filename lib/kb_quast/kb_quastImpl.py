@@ -4,7 +4,6 @@ import errno as _errno
 import os as _os
 import subprocess as _subprocess
 import time as _time
-import uuid
 import uuid as _uuid
 
 import psutil
@@ -62,6 +61,10 @@ stored in a zip file in Shock.
 
     THREADS_PER_CORE = 1
     TWENTY_MB = 20 * 1024 * 1024
+    # Same as Quast: http://quast.sourceforge.net/docs/manual.html#sec2.3
+    DEFAULT_MIN_CONTIG_LENGTH = 500
+    # Per the KBase SME slack channel, 50 is an appropriate lower bound
+    MINIMUM_MIN_CONTIG_LENGTH = 50
 
     def log(self, message, prefix_newline=False):
         print(('\n' if prefix_newline else '') + str(_time.time()) + ': ' + message)
@@ -80,6 +83,14 @@ stored in a zip file in Shock.
                 pass
             else:
                 raise
+
+    def get_min_contig_length(self, params):
+        mcl = params.get('min_contig_length')
+        mcl = self.DEFAULT_MIN_CONTIG_LENGTH if mcl is None else mcl
+        if type(mcl) != int or mcl < self.MINIMUM_MIN_CONTIG_LENGTH:
+            raise ValueError("Minimum contig length must be an integer >= {}, got: {}"
+                             .format(self.MINIMUM_MIN_CONTIG_LENGTH, mcl))
+        return mcl
 
     def get_assemblies(self, target_dir, object_infos):
         filepaths = []
@@ -116,12 +127,18 @@ stored in a zip file in Shock.
             raise ValueError('Duplicate objects detected in input')  # could list objs later
         return info
 
-    def run_quast_exec(self, outdir, filepaths, labels, skip_glimmer=False):
+    def run_quast_exec(self, outdir, filepaths, labels, min_contig_length, skip_glimmer=False):
         threads = psutil.cpu_count() * self.THREADS_PER_CORE
         # DO NOT use genemark instead of glimmer, not open source
         # DO NOT use metaQUAST, uses SILVA DB which is not open source
-        cmd = ['quast.py', '--threads', str(threads), '-o', outdir, '--labels', ','.join(labels),
-               '--glimmer', '--contig-thresholds', '0,1000,10000,100000,1000000'] + filepaths
+        cmd = (['quast.py',
+                '--threads', str(threads),
+                '-o', outdir,
+                '--labels', ','.join(labels),
+                '--min-contig', str(min_contig_length),
+                '--glimmer',
+                '--contig-thresholds', '0,1000,10000,100000,1000000']
+               + filepaths)
 
         if skip_glimmer:
             self.log('skipping glimmer due to large input file(s)')
@@ -137,7 +154,8 @@ stored in a zip file in Shock.
         # quast will ignore bad files and keep going, which is a disaster for
         # reproducibility and accuracy if you're not watching the logs like a hawk.
         # for now use this hack to check that all files were processed. Maybe there's a better way.
-        files_proc = len(open(_os.path.join(outdir, 'report.tsv'), 'r').readline().split('\t')) - 1
+        with open(_os.path.join(outdir, 'report.tsv'), 'r') as f:
+            files_proc = len(f.readline().split('\t')) - 1
         files_exp = len(filepaths)
         if files_proc != files_exp:
             err = ('QUAST skipped some files - {} expected, {} processed.'
@@ -210,7 +228,7 @@ stored in a zip file in Shock.
                                  'name': 'report.html',
                                  'label': 'QUAST report'}
                                 ],
-                 'report_object_name': 'kb_quast_report_' + str(uuid.uuid4()),
+                 'report_object_name': 'kb_quast_report_' + str(_uuid.uuid4()),
                  'workspace_name': wsname
                  })
         except _RepError as re:
@@ -276,6 +294,7 @@ stored in a zip file in Shock.
         self.log(str(params))
         assemblies = params.get('assemblies')
         files = params.get('files')
+        min_contig_length = self.get_min_contig_length(params)  # fail early if param is bad
         if not self.xor(assemblies, files):
             raise ValueError(
                 'One and only one of a list of assembly references or files is required')
@@ -308,7 +327,7 @@ stored in a zip file in Shock.
 
         out = _os.path.join(tdir, 'quast_results')
         # TODO check for name duplicates in labels and do something about it
-        self.run_quast_exec(out, filepaths, labels, skip_glimmer)
+        self.run_quast_exec(out, filepaths, labels, min_contig_length, skip_glimmer)
         dfu = _DFUClient(self.callback_url)
         try:
             mh = params.get('make_handle')
