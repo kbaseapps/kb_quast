@@ -34,6 +34,25 @@ class ObjInfo(object):
         self.size = obj_info[9]
         self.meta = obj_info[10]
         self.ref = str(self.wsid) + '/' + str(self.id) + '/' + str(self.version)
+
+
+def _setup_files(files):
+    if not files:
+        raise ValueError('The files argument is required')
+    if type(files) != list:
+        raise ValueError('files must be a list')
+    labels, filepaths = [], []
+    for i, lp in enumerate(files):
+        l = lp.get('label')
+        p = lp.get('path')
+        if not _os.path.isfile(p):
+            raise ValueError('File entry {}, {}, is not a file'.format(i + 1, p))
+        l = l if l else _os.path.basename(p)
+        filepaths.append(p)
+        labels.append(l)
+    return labels, filepaths
+
+
 #END_HEADER
 
 
@@ -55,7 +74,7 @@ stored in a zip file in Shock.
     ######################################### noqa
     VERSION = "1.1.0"
     GIT_URL = "https://github.com/kbaseapps/kb_quast"
-    GIT_COMMIT_HASH = "f6be7c27bbf44a0d65b0250dbdb8079b5df9d7ae"
+    GIT_COMMIT_HASH = "14a88101fbe5639aeaa7b0e8e759070374a7d540"
 
     #BEGIN_CLASS_HEADER
 
@@ -127,7 +146,14 @@ stored in a zip file in Shock.
             raise ValueError('Duplicate objects detected in input')  # could list objs later
         return info
 
-    def run_quast_exec(self, outdir, filepaths, labels, min_contig_length, skip_glimmer=False):
+    def run_quast_exec(self, outdir, filepaths, labels, min_contig_length, force_glimmer):
+        if force_glimmer:
+            skip_glimmer = False
+        else:
+            skip_glimmer = self.check_large_input(filepaths)
+
+        # TODO check for name duplicates in labels and do something about it
+        
         threads = psutil.cpu_count() * self.THREADS_PER_CORE
         # DO NOT use genemark instead of glimmer, not open source
         # DO NOT use metaQUAST, uses SILVA DB which is not open source
@@ -250,6 +276,57 @@ stored in a zip file in Shock.
         # return the results
         return [output]
 
+    def run_QUAST_local(self, ctx, params):
+        """
+        Run QUAST entirely locally.
+        :param params: instance of type "QUASTLocalParams" (Innput for the
+           run_quest_local function. files - the list of FASTA files upon
+           which QUAST will be run. quast_path - the in-container path where
+           the QUAST output should be stored. Optional arguments:
+           force_glimmer - runs the '--glimmer' option regardless of
+           file/assembly object size if true min_contig_length - set the
+           minimum size of contigs to process. Defaults to 500, minimum
+           allowed is 50.) -> structure: parameter "files" of list of type
+           "FASTAFile" (A local FASTA file. path - the in-container path to
+           the FASTA file. label - the label to use for the file in the QUAST
+           output. If missing, the file name will be used.) -> structure:
+           parameter "path" of String, parameter "label" of String, parameter
+           "quast_path" of String, parameter "force_glimmer" of type
+           "boolean" (A boolean - 0 for false, 1 for true. @range (0, 1)),
+           parameter "min_contig_length" of Long
+        :returns: instance of type "QUASTLocalOutput" (Output of the
+           run_quast_local function. quast_path - the directory containing
+           the quast output.) -> structure: parameter "quast_path" of String
+        """
+        # ctx is the context object
+        # return variables are: output
+        #BEGIN run_QUAST_local
+        
+        self.log('Starting QUAST local run. Parameters:')
+        self.log(str(params))
+        files = params.get('files')
+        min_contig_length = self.get_min_contig_length(params)  # fail early if param is bad
+        outdir = params.get("quast_path")
+        # Deliberatly coded to not use scratch since it's hardcoded in deploy.cfg
+        # and changing that would break the module for standard SDK runs
+        # Don't need to do that if we have output mounting
+        if not outdir or not outdir.strip():
+            raise ValueError("The quast_path argument is required")
+        self.mkdir_p(outdir)
+        labels, filepaths = _setup_files(files)
+
+        self.run_quast_exec(
+            outdir, filepaths, labels, min_contig_length, params.get("force_glimmer"))
+        output = {"quast_path": outdir}
+        #END run_QUAST_local
+        
+        # At some point might do deeper type checking...
+        if not isinstance(output, dict):
+            raise ValueError('Method run_QUAST_local return value ' +
+                             'output is not type dict as required.')
+        # return the results
+        return [output]
+
     def run_QUAST(self, ctx, params):
         """
         Run QUAST and return a shock node containing the zipped QUAST output.
@@ -265,14 +342,14 @@ stored in a zip file in Shock.
            workspace object containing an assembly, either a
            KBaseGenomes.ContigSet or KBaseGenomeAnnotations.Assembly.),
            parameter "files" of list of type "FASTAFile" (A local FASTA file.
-           path - the path to the FASTA file. label - the label to use for
-           the file in the QUAST output. If missing, the file name will be
-           used.) -> structure: parameter "path" of String, parameter "label"
-           of String, parameter "make_handle" of type "boolean" (A boolean -
-           0 for false, 1 for true. @range (0, 1)), parameter "force_glimmer"
-           of type "boolean" (A boolean - 0 for false, 1 for true. @range (0,
-           1)), parameter "min_contig_length" of Long
-        :returns: instance of type "QUASTOutput" (Ouput of the run_quast
+           path - the in-container path to the FASTA file. label - the label
+           to use for the file in the QUAST output. If missing, the file name
+           will be used.) -> structure: parameter "path" of String, parameter
+           "label" of String, parameter "make_handle" of type "boolean" (A
+           boolean - 0 for false, 1 for true. @range (0, 1)), parameter
+           "force_glimmer" of type "boolean" (A boolean - 0 for false, 1 for
+           true. @range (0, 1)), parameter "min_contig_length" of Long
+        :returns: instance of type "QUASTOutput" (Output of the run_quast
            function. shock_id - the id of the shock node where the zipped
            QUAST output is stored. handle - the new handle for the shock
            node, if created. node_file_name - the name of the file stored in
@@ -311,27 +388,11 @@ stored in a zip file in Shock.
             filepaths = self.get_assemblies(tdir, info)
             labels = [i.name for i in info]
         else:
-            if type(files) != list:
-                raise ValueError('files must be a list')
-            filepaths = []
-            labels = []
-            for i, lp in enumerate(files):
-                l = lp.get('label')
-                p = lp.get('path')
-                if not _os.path.isfile(p):
-                    raise ValueError('File entry {}, {}, is not a file'.format(i + 1, p))
-                l = l if l else _os.path.basename(p)
-                filepaths.append(p)
-                labels.append(l)
-
-        if params.get('force_glimmer'):
-            skip_glimmer = False
-        else:
-            skip_glimmer = self.check_large_input(filepaths)
+            labels, filepaths = _setup_files(files)
 
         out = _os.path.join(tdir, 'quast_results')
-        # TODO check for name duplicates in labels and do something about it
-        self.run_quast_exec(out, filepaths, labels, min_contig_length, skip_glimmer)
+
+        self.run_quast_exec(out, filepaths, labels, min_contig_length, params.get("force_glimmer"))
         dfu = _DFUClient(self.callback_url)
         try:
             mh = params.get('make_handle')

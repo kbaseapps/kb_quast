@@ -33,7 +33,7 @@ module kb_quast {
 	} Handle;
 	
 	/* A local FASTA file.
-		path - the path to the FASTA file.
+		path - the in-container path to the FASTA file.
 		label - the label to use for the file in the QUAST output. If missing, the file name will
 		be used.
 	*/
@@ -68,6 +68,33 @@ module kb_quast {
 	/* Run QUAST and save a KBaseReport with the output. */
 	funcdef run_QUAST_app(QUASTAppParams params) returns(QUASTAppOutput output)
 		authentication required;
+		
+	/* Innput for the run_quest_local function.
+		
+		files - the list of FASTA files upon which QUAST will be run.
+		quast_path - the in-container path where the QUAST output should be stored.
+
+		Optional arguments:
+		force_glimmer - runs the '--glimmer' option regardless of file/assembly object size if true
+		min_contig_length - set the minimum size of contigs to process. Defaults to 500,
+			minimum allowed is 50.
+	*/
+	typedef structure {
+		list<FASTAFile> files;
+		string quast_path;
+		boolean force_glimmer;
+		int min_contig_length;
+	} QUASTLocalParams;
+	
+	/* Output of the run_quast_local function.
+		quast_path - the directory containing the quast output.
+	*/
+	typedef structure {
+		string quast_path;
+	} QUASTLocalOutput;
+	
+	/* Run QUAST entirely locally. */
+	funcdef run_QUAST_local(QUASTLocalParams params) returns(QUASTLocalOutput output);
 	
 	/* Input for running QUAST.
 		assemblies - the list of assemblies upon which QUAST will be run.
@@ -88,7 +115,7 @@ module kb_quast {
         int min_contig_length;
 	} QUASTParams;
 	
-	/* Ouput of the run_quast function.
+	/* Output of the run_quast function.
 		shock_id - the id of the shock node where the zipped QUAST output is stored.
 		handle - the new handle for the shock node, if created.
 		node_file_name - the name of the file stored in Shock.

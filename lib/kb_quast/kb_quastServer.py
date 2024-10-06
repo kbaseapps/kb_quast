@@ -342,6 +342,10 @@ class Application(object):
                              name='kb_quast.run_QUAST_app',
                              types=[dict])
         self.method_authentication['kb_quast.run_QUAST_app'] = 'required'  # noqa
+        self.rpc_service.add(impl_kb_quast.run_QUAST_local,
+                             name='kb_quast.run_QUAST_local',
+                             types=[dict])
+        self.method_authentication['kb_quast.run_QUAST_local'] = 'none'  # noqa
         self.rpc_service.add(impl_kb_quast.run_QUAST,
                              name='kb_quast.run_QUAST',
                              types=[dict])
