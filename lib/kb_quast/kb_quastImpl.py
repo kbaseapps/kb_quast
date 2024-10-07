@@ -53,9 +53,9 @@ stored in a zip file in Shock.
     # state. A method could easily clobber the state set by another while
     # the latter method is running.
     ######################################### noqa
-    VERSION = "0.0.6"
-    GIT_URL = "https://github.com/kbaseapps/kb_quast.git"
-    GIT_COMMIT_HASH = "8d29af55af662fa41442c0134dd90c45decd8cf4"
+    VERSION = "1.1.0"
+    GIT_URL = "https://github.com/kbaseapps/kb_quast"
+    GIT_COMMIT_HASH = "f6be7c27bbf44a0d65b0250dbdb8079b5df9d7ae"
 
     #BEGIN_CLASS_HEADER
 
@@ -195,13 +195,15 @@ stored in a zip file in Shock.
            QUAST as a Narrative application. workspace_name - the name of the
            workspace where the KBaseReport object will be saved. assemblies -
            the list of assemblies upon which QUAST will be run. force_glimmer
-           - running '--glimmer' option regardless of assembly object size)
-           -> structure: parameter "workspace_name" of String, parameter
-           "assemblies" of list of type "assembly_ref" (An X/Y/Z style
-           reference to a workspace object containing an assembly, either a
-           KBaseGenomes.ContigSet or KBaseGenomeAnnotations.Assembly.),
-           parameter "force_glimmer" of type "boolean" (A boolean - 0 for
-           false, 1 for true. @range (0, 1))
+           - running '--glimmer' option regardless of assembly object size
+           min_contig_length - set the minimum size of contigs to process.
+           Defaults to 500, minimum allowed is 50.) -> structure: parameter
+           "workspace_name" of String, parameter "assemblies" of list of type
+           "assembly_ref" (An X/Y/Z style reference to a workspace object
+           containing an assembly, either a KBaseGenomes.ContigSet or
+           KBaseGenomeAnnotations.Assembly.), parameter "force_glimmer" of
+           type "boolean" (A boolean - 0 for false, 1 for true. @range (0,
+           1)), parameter "min_contig_length" of Long
         :returns: instance of type "QUASTAppOutput" (Output of the
            run_quast_app function. report_name - the name of the
            KBaseReport.Report workspace object. report_ref - the workspace
@@ -256,18 +258,20 @@ stored in a zip file in Shock.
            be run. -OR- files - the list of FASTA files upon which QUAST will
            be run. Optional arguments: make_handle - create a handle for the
            new shock node for the report. force_glimmer - running '--glimmer'
-           option regardless of file/assembly object size) -> structure:
-           parameter "assemblies" of list of type "assembly_ref" (An X/Y/Z
-           style reference to a workspace object containing an assembly,
-           either a KBaseGenomes.ContigSet or
-           KBaseGenomeAnnotations.Assembly.), parameter "files" of list of
-           type "FASTAFile" (A local FASTA file. path - the path to the FASTA
-           file. label - the label to use for the file in the QUAST output.
-           If missing, the file name will be used.) -> structure: parameter
-           "path" of String, parameter "label" of String, parameter
-           "make_handle" of type "boolean" (A boolean - 0 for false, 1 for
-           true. @range (0, 1)), parameter "force_glimmer" of type "boolean"
-           (A boolean - 0 for false, 1 for true. @range (0, 1))
+           option regardless of file/assembly object size min_contig_length -
+           set the minimum size of contigs to process. Defaults to 500,
+           minimum allowed is 50.) -> structure: parameter "assemblies" of
+           list of type "assembly_ref" (An X/Y/Z style reference to a
+           workspace object containing an assembly, either a
+           KBaseGenomes.ContigSet or KBaseGenomeAnnotations.Assembly.),
+           parameter "files" of list of type "FASTAFile" (A local FASTA file.
+           path - the path to the FASTA file. label - the label to use for
+           the file in the QUAST output. If missing, the file name will be
+           used.) -> structure: parameter "path" of String, parameter "label"
+           of String, parameter "make_handle" of type "boolean" (A boolean -
+           0 for false, 1 for true. @range (0, 1)), parameter "force_glimmer"
+           of type "boolean" (A boolean - 0 for false, 1 for true. @range (0,
+           1)), parameter "min_contig_length" of Long
         :returns: instance of type "QUASTOutput" (Ouput of the run_quast
            function. shock_id - the id of the shock node where the zipped
            QUAST output is stored. handle - the new handle for the shock

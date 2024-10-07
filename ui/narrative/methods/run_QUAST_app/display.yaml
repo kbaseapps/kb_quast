@@ -1,4 +1,4 @@
-name     : Assess Quality of Assemblies with QUAST - v4.4
+name     : Assess Quality of Assemblies with QUAST - v5.2.0
 
 tooltip  : Run QUAST (QUality ASsessment Tool) on a set of Assemblies to assess their quality.
 
@@ -34,7 +34,7 @@ parameters :
           Set the minimum size of contigs to process. Defaults to 500, minimum allowed is 50.
 
 description : |
-    <p>This is the KBase wrapper for version 4.4 of the <a href="http://quast.sourceforge.net/" target="_blank">QUAST</a> assembly quality assessment tool. QUAST evaluates assemblies by computing various metrics, including number of contigs, N50/75, L50/75, GC content, number of uncalled bases (N’s), and predicted genes. It takes one or more Assembly objects as input and then generates an output report with statistics for all of the input assemblies.</p>
+    <p>This is the KBase wrapper for version 5.2.0 of the <a href="http://quast.sourceforge.net/" target="_blank">QUAST</a> assembly quality assessment tool. QUAST evaluates assemblies by computing various metrics, including number of contigs, N50/75, L50/75, GC content, number of uncalled bases (N’s), and predicted genes. It takes one or more Assembly objects as input and then generates an output report with statistics for all of the input assemblies.</p>
 
     <p>Use QUAST to assess the output assemblies from different configurations of the same assembler, or compare assemblies from multiple assemblers to determine which one is optimal for downstream analysis. The QUAST report color codes "worst, median, best" for each of the statistics generated, but pay attention to the degree of difference between the lengths and values to better understand how the parameters of your assembler relate to the resulting Assembly.</p>
 

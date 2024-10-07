@@ -138,7 +138,7 @@ class kb_quastTest(unittest.TestCase):
         ret = self.impl.run_QUAST(self.ctx, {'files': [
             {'path': 'data/greengenes_UnAligSeq24606.fa', 'label': 'foobar'}],
             'make_handle': 1})[0]
-        self.check_quast_output(ret, 328982, 'a8ee2a3d96a3857105987c960185f307',
+        self.check_quast_output(ret, 329729, 'a64692fe665ba0174ca4992caa00ea77',
                                 '6522bf4c7a54f96b99f7097c1a6afb01')
 
     def test_quast_min_contig_length(self):
@@ -147,20 +147,20 @@ class kb_quastTest(unittest.TestCase):
         test_params = [
             {
                 'min_contig_length': 50,
-                'expected_size': 329830,
-                'expected_report_md5': 'dbb67e35b015c4fbc41f0b2d06472de7',
+                'expected_size': 330599,
+                'expected_report_md5': '741b2d1dec8dbb81fe9a877c4bc1e329',
                 'expected_icarus_md5': '6522bf4c7a54f96b99f7097c1a6afb01'
             },
             {
                 'min_contig_length': 100,
-                'expected_size': 329868,
-                'expected_report_md5': '1ea996fa0d42cb950e7c59d7fa0207c2',
+                'expected_size': 330656,
+                'expected_report_md5': '354573cf4b70a013abb20e568aeae7f6',
                 'expected_icarus_md5': '6522bf4c7a54f96b99f7097c1a6afb01'
             },
             {
                 'min_contig_length': None,
-                'expected_size': 329068,
-                'expected_report_md5': '40a90e7a8a2f7cd527ddb9d46e6918d7',
+                'expected_size': 329785,
+                'expected_report_md5': '0812e658c08374fa26a1a93dd6b4402d',
                 'expected_icarus_md5': '6522bf4c7a54f96b99f7097c1a6afb01'
             }
         ]
@@ -185,12 +185,12 @@ class kb_quastTest(unittest.TestCase):
         ret = self.impl.run_QUAST(self.ctx, {'files': [
             {'path': 'data/greengenes_UnAligSeq24606.fa', 'label': 'foobar'}],
             'make_handle': 0})[0]
-        self.check_quast_output(ret, 328982, 'a8ee2a3d96a3857105987c960185f307',
+        self.check_quast_output(ret, 329726, 'a64692fe665ba0174ca4992caa00ea77',
                                 '6522bf4c7a54f96b99f7097c1a6afb01', no_handle=True)
 
         ret = self.impl.run_QUAST(self.ctx, {'files': [
             {'path': 'data/greengenes_UnAligSeq24606.fa', 'label': 'foobar'}]})[0]
-        self.check_quast_output(ret, 328982, 'a8ee2a3d96a3857105987c960185f307',
+        self.check_quast_output(ret, 329727, 'a64692fe665ba0174ca4992caa00ea77',
                                 '6522bf4c7a54f96b99f7097c1a6afb01', no_handle=True)
 
     def test_quast_from_2_files(self):
@@ -199,7 +199,7 @@ class kb_quastTest(unittest.TestCase):
             {'path': 'data/greengenes_UnAligSeq24606.fa', 'label': 'foo'},
             {'path': 'data/greengenes_UnAligSeq24606_edit1.fa'}],
             'make_handle': 1})[0]
-        self.check_quast_output(ret, 349008, '365aa50eda257a514b7fbae4edfba0a7',
+        self.check_quast_output(ret, 350263, 'd993842bcd881592aad50a8df8925499',
                                 '2d10706f4ecfdbbe6d5d86e8578adbfa')
 
     @patch.object(kb_quast, "TWENTY_MB", new=10)
@@ -211,7 +211,7 @@ class kb_quastTest(unittest.TestCase):
             {'path': 'data/greengenes_UnAligSeq24606_edit1.fa'}],
             'make_handle': 1})[0]
 
-        self.check_quast_output(ret, 345047, 'e8c7d24f35a8c3feb1da4c58623ad277',
+        self.check_quast_output(ret, 346400, '6aebc5fd90156d8ce31c64f30e19fa19',
                                 '2d10706f4ecfdbbe6d5d86e8578adbfa', skip_glimmer=True)
 
     @patch.object(kb_quast, "TWENTY_MB", new=10)
@@ -222,7 +222,7 @@ class kb_quastTest(unittest.TestCase):
             {'path': 'data/greengenes_UnAligSeq24606_edit1.fa'}],
             'make_handle': 1,
             'force_glimmer': True})[0]
-        self.check_quast_output(ret, 349007, '365aa50eda257a514b7fbae4edfba0a7',
+        self.check_quast_output(ret, 350266, 'd993842bcd881592aad50a8df8925499',
                                 '2d10706f4ecfdbbe6d5d86e8578adbfa', skip_glimmer=False)
 
     def test_quast_from_1_wsobj(self):
@@ -235,7 +235,7 @@ class kb_quastTest(unittest.TestCase):
              'workspace_name': self.ws_info[1],
              'assembly_name': 'assy1'})
         ret = self.impl.run_QUAST(self.ctx, {'assemblies': [ref], 'make_handle': 1})[0]
-        self.check_quast_output(ret, 328484, 'f8a8b01c9939614b50381d9a760c3ee4',
+        self.check_quast_output(ret, 329244, '3e22e7ae2b33559a4f9bb18dc4f2b06c',
                                 '140133e21ce35277cb7adc2eed2b1fd5')
 
     def test_quast_from_2_wsobj(self):
@@ -263,7 +263,7 @@ class kb_quastTest(unittest.TestCase):
 
         ret = self.impl.run_QUAST(self.ctx, {'assemblies': [wsref1, wsref2], 'make_handle': 1})[0]
         self.check_quast_output(
-            ret, 343977, 'a44837b572fd48e6cd4179399b9aacd7', '3e2d94fb1d29d48c3058f8cbb68674ae',
+            ret, 345199, '8f9c1e7536cc3f94e4b00c2dd543e56f', '3e2d94fb1d29d48c3058f8cbb68674ae',
             tolerance=30)
 
     @patch.object(kb_quast, "TWENTY_MB", new=10)
@@ -277,7 +277,7 @@ class kb_quastTest(unittest.TestCase):
              'workspace_name': self.ws_info[1],
              'assembly_name': 'assy1'})
         ret = self.impl.run_QUAST(self.ctx, {'assemblies': [ref], 'make_handle': 1})[0]
-        self.check_quast_output(ret, 326214, '26876f8e773af163cf0e2518bbd28ab7',
+        self.check_quast_output(ret, 327029, '215bb5b5ae200c680e36d32813246b99',
                                 '140133e21ce35277cb7adc2eed2b1fd5', skip_glimmer=True)
 
     @patch.object(kb_quast, "TWENTY_MB", new=10)
@@ -292,7 +292,7 @@ class kb_quastTest(unittest.TestCase):
              'assembly_name': 'assy1'})
         ret = self.impl.run_QUAST(self.ctx, {'assemblies': [ref], 'make_handle': 1, 
                                              'force_glimmer': True})[0]
-        self.check_quast_output(ret, 328482, 'f8a8b01c9939614b50381d9a760c3ee4',
+        self.check_quast_output(ret, 329245, '3e22e7ae2b33559a4f9bb18dc4f2b06c',
                                 '140133e21ce35277cb7adc2eed2b1fd5', skip_glimmer=False)
 
     def test_fail_no_input(self):
@@ -404,7 +404,7 @@ class kb_quastTest(unittest.TestCase):
              'assembly_name': 'assy1'})
         ret = self.impl.run_QUAST_app(self.ctx, {'assemblies': [ref],
                                                  'workspace_name': self.ws_info[1]})[0]
-        self.check_quast_app_output(ret, 328483, 'f8a8b01c9939614b50381d9a760c3ee4',
+        self.check_quast_app_output(ret, 329245, '3e22e7ae2b33559a4f9bb18dc4f2b06c',
                                     '140133e21ce35277cb7adc2eed2b1fd5')
 
     @patch.object(kb_quast, "TWENTY_MB", new=10)
@@ -419,7 +419,7 @@ class kb_quastTest(unittest.TestCase):
              'assembly_name': 'assy1'})
         ret = self.impl.run_QUAST_app(self.ctx, {'assemblies': [ref],
                                                  'workspace_name': self.ws_info[1]})[0]
-        self.check_quast_app_output(ret, 326214, '26876f8e773af163cf0e2518bbd28ab7',
+        self.check_quast_app_output(ret, 327027, '215bb5b5ae200c680e36d32813246b99',
                                     '140133e21ce35277cb7adc2eed2b1fd5', skip_glimmer=True)
 
     @patch.object(kb_quast, "TWENTY_MB", new=10)
@@ -435,7 +435,7 @@ class kb_quastTest(unittest.TestCase):
         ret = self.impl.run_QUAST_app(self.ctx, {'assemblies': [ref],
                                                  'workspace_name': self.ws_info[1],
                                                  'force_glimmer': True})[0]
-        self.check_quast_app_output(ret, 328482, 'f8a8b01c9939614b50381d9a760c3ee4',
+        self.check_quast_app_output(ret, 329246, '3e22e7ae2b33559a4f9bb18dc4f2b06c',
                                     '140133e21ce35277cb7adc2eed2b1fd5', skip_glimmer=False)
 
     def test_fail_app_no_workspace(self):
