@@ -14,9 +14,10 @@ workflow sdk_quast_test {
 task quast {
   input {
     Array[File] files
+    Int total = length(files)
   }
 
-  command {
+  command <<<
     # Not calling any services so no config file needed
     export KBASE_ENDPOINT="http://fakeendpointthatdoesntexist.com"
     
@@ -31,14 +32,27 @@ task quast {
     # This is an insane hack to make the quast input JSON. It's as minimal as possible here,
     # but this isn't workable in general - we need input/output mounting so we can predict the file
     # paths and create the JSON serverside at submit time
+    export quote="\""
+    echo "quote=$quote"
+    export file1=~{files[0]}
+    export file1name=$(basename file1)
+
     echo "{\"files\": [" > input.json
-    echo "    {\"path\": \"${files[0]}", \"label\": \"$(basename ${files[0]})}\"" >> input.json
-    
-    for file in ${input_files[1:]}; do
-        echo ",\n    {"\path\": \"$file\", \"label\": \"$(basename $file)}\"" >> input.json
+    echo -n "    {\"path\": \"$file1\"," >> input.json
+    echo -n " \"label\": \"" >> input.json
+    echo -n $file1name >> input.json
+    echo -n $quote} >> input.json
+
+    FILES=('~{sep="' '" files}')
+    for (( c = 1; c < ~{total}; c++ )); do
+        FILE=$FILES[$c]
+        FILENAME=$(basename $FILE)
+        echo , >> input.json
+        echo -n "    {"\path\": \"$FILE\", \"label\": \"$FILENAME\"}">>input.json
+    done
         
-    echo "  ],\n \"quast_path\": \"$(pwd)/__output__\"" >> input.json
-    echo "}" >> input.json
+    echo "\n  ],\n \"quast_path\": \"$(pwd)/__output__\"">>input.json
+    echo "}">>input.json
 
     /kb/module/scripts/entrypoint.sh async
     EC=$?
@@ -50,7 +64,7 @@ task quast {
     if [ $EC -ne 0 ]; then
         exit $EC
     fi
-  }
+  >>>
 
   output {
     Array[File] output_files = read_lines("output_files.txt")
@@ -59,7 +73,7 @@ task quast {
   }
 
   runtime {
-    docker: "ghcr.io/kbaseapps/kb_quast:pr-35"
+    docker: "ghcr.io/kbaseapps/kb_quast:pr-36"
     runtime_minutes: 20
     memory: "100 GB"
     cpu: 4
