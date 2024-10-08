@@ -20,6 +20,10 @@ task quast {
   command <<<
     # Not calling any services so no config file needed
     export KBASE_ENDPOINT="http://fakeendpointthatdoesntexist.com"
+
+    # Hack to allow the code to run scripts, mounting output could fix this
+    cp -R /kb/module/scripts scripts
+    cp /kb/module/deploy.cfg deploy.cfg
     
     # Hack to make the code not write in /kb/module/work, mounting output to work would work here
     mkdir work
@@ -32,29 +36,33 @@ task quast {
     # This is an insane hack to make the quast input JSON. It's as minimal as possible here,
     # but this isn't workable in general - we need input/output mounting so we can predict the file
     # paths and create the JSON serverside at submit time
-    export quote="\""
-    echo "quote=$quote"
-    export file1=~{files[0]}
-    export file1name=$(basename file1)
+    QUOTE="\""
+    echo "quote=$QUOTE"
+    FILE1=~{files[0]}
+    export FILE1NAME=$(basename $FILE1)
 
     echo "{\"files\": [" > input.json
-    echo -n "    {\"path\": \"$file1\"," >> input.json
+    echo -n "    {\"path\": \"$FILE1\"," >> input.json
     echo -n " \"label\": \"" >> input.json
-    echo -n $file1name >> input.json
-    echo -n $quote} >> input.json
+    echo -n $FILE1NAME >> input.json
+    echo -n $QUOTE} >> input.json
 
     FILES=('~{sep="' '" files}')
     for (( c = 1; c < ~{total}; c++ )); do
-        FILE=$FILES[$c]
+        FILE=${FILES[$c]}
         FILENAME=$(basename $FILE)
         echo , >> input.json
-        echo -n "    {"\path\": \"$FILE\", \"label\": \"$FILENAME\"}">>input.json
+        echo -n "    {\"path\": \"$FILE\", \"label\": \"$FILENAME\"}" >> input.json
     done
-        
-    echo "\n  ],\n \"quast_path\": \"$(pwd)/__output__\"">>input.json
+   
+    echo "" >> input.json
+    echo "  ]," >> input.json
+    echo " \"quast_path\": \"$(pwd)/__output__\"" >> input.json
     echo "}">>input.json
 
-    /kb/module/scripts/entrypoint.sh async
+    # hack to use the copied scripts dir rather than the linked one.
+    # if work can be mounted as writeable to output I think this isn't needed
+    ./scripts/entrypoint.sh async
     EC=$?
 
     echo "Entrypoint exit code: $EC"

@@ -1,5 +1,8 @@
 script_dir=$(dirname "$(readlink -f "$0")")
+echo "script: $0"
+echo "script_dir: $script_dir"
 export KB_DEPLOYMENT_CONFIG=$script_dir/../deploy.cfg
+echo "KB DEPLOY: $KB_DEPLOYMENT_CONFIG"
 # Would need input mounting to make this work in JAWS, allowing setting it for now
 # WD=/kb/module/work
 if [ -f $WD/token ]; then
