@@ -88,7 +88,7 @@ task quast {
   }
 
   runtime {
-    docker: "ghcr.io/kbaseapps/kb_quast:pr-36"
+    docker: "ghcr.io/kbaseapps/kb_quast:pr-36@sha256:5bb0d1bcf15de1fbf8596d3c4351ff6610a85ec1a0676fc18b224294c505edd0"
     runtime_minutes: 20
     memory: "100 GB"
     cpu: 4
