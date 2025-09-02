@@ -5,6 +5,8 @@ import os as _os
 import subprocess as _subprocess
 import time as _time
 import uuid as _uuid
+import shlex  # kept from original (not used directly but harmless)
+from pathlib import Path  # kept from original (not used directly but harmless)
 
 import psutil
 from Bio import SeqIO as _SeqIO
@@ -17,6 +19,7 @@ from installed_clients.baseclient import ServerError as _AssError
 from installed_clients.baseclient import ServerError as _DFUError
 from installed_clients.baseclient import ServerError as _RepError
 from installed_clients.baseclient import ServerError as _WSError
+#END_HEADER
 
 
 class ObjInfo(object):
@@ -34,8 +37,6 @@ class ObjInfo(object):
         self.size = obj_info[9]
         self.meta = obj_info[10]
         self.ref = str(self.wsid) + '/' + str(self.id) + '/' + str(self.version)
-#END_HEADER
-
 
 class kb_quast:
     '''
@@ -95,7 +96,7 @@ stored in a zip file in Shock.
     def get_assemblies(self, target_dir, object_infos):
         filepaths = []
         asscli = _AssClient(self.callback_url)
-        # would be nice the the assembly utils had bulk download...
+        # would be nice if the assembly utils had bulk download...
         for i in object_infos:
             fn = _os.path.join(target_dir, i.ref.replace('/', '_'))
             filepaths.append(fn)
@@ -105,27 +106,76 @@ stored in a zip file in Shock.
             except _AssError as asserr:
                 self.log('Logging assembly downloader exception')
                 self.log(str(asserr))
-                raise
+                raise asserr
         return filepaths
 
     def get_assembly_object_info(self, assemblies, token):
+        # Prefer the top-level ObjInfo; fall back to a local definition if missing
+        ObjInfoClass = globals().get('ObjInfo')
+        if ObjInfoClass is None:
+            class ObjInfoClass(object):
+                def __init__(self, obj_info):
+                    self.id = obj_info[0]
+                    self.name = obj_info[1]
+                    t_full = obj_info[2]
+                    self.type, self.type_ver = (t_full.split('-', 1) + [''])[:2] if '-' in t_full else (t_full, '')
+                    self.time = obj_info[3]
+                    self.version = obj_info[4]
+                    self.saved_by = obj_info[5]
+                    self.wsid = obj_info[6]
+                    self.workspace = obj_info[7]
+                    self.chsum = obj_info[8]
+                    self.size = obj_info[9]
+                    self.meta = obj_info[10]
+                    self.ref = f"{self.wsid}/{self.id}/{self.version}"
+
         refs = [{'ref': x} for x in assemblies]
         ws = _WSClient(self.ws_url, token=token)
         self.log('Getting object information from workspace')
-        # TODO use this often enough that should add to DFU but return dict vs list
+
         try:
-            info = [ObjInfo(i) for i in ws.get_object_info3({'objects': refs})['infos']]
+            infos = ws.get_object_info3({'objects': refs})['infos']
         except _WSError as wse:
             self.log('Logging workspace exception')
             self.log(str(wse))
-            raise
+            raise wse
+
+        info = [ObjInfoClass(i) for i in infos]
+
         self.log('Object list:')
-        for i in info:  # don't check type - assemblyutils should handle that
-            self.log('{}/{} {} {}'.format(i.workspace, i.name, i.ref, i.type))
-        absrefs = [i.ref for i in info]
+        for o in info:
+            self.log(f'{o.workspace}/{o.name} {o.ref} {o.type}')
+
+        absrefs = [o.ref for o in info]
         if len(set(absrefs)) != len(absrefs):
-            raise ValueError('Duplicate objects detected in input')  # could list objs later
+            raise ValueError('Duplicate objects detected in input')
         return info
+
+    def expand_assembly_sets(self, set_refs, token):
+        """
+        Given a list of KBaseSets.AssemblySet refs, return a flat list of assembly refs.
+        Supports common schemas: {'items': [{'ref': ...}, ...]} or {'elements': [{'ref': ...}, ...]}.
+        """
+        if not set_refs:
+            return []
+        ws = _WSClient(self.ws_url, token=token)
+        objs = ws.get_objects2({'objects': [{'ref': r} for r in set_refs]})['data']
+        out = []
+        for od in objs:
+            data = od.get('data', {}) or {}
+            items = data.get('items')
+            if isinstance(items, list):
+                for it in items:
+                    if isinstance(it, dict) and it.get('ref'):
+                        out.append(it['ref'])
+                continue
+            elements = data.get('elements')
+            if isinstance(elements, list):
+                for el in elements:
+                    if isinstance(el, dict) and el.get('ref'):
+                        out.append(el['ref'])
+                continue
+        return out
 
     def run_quast_exec(self, outdir, filepaths, labels, min_contig_length, skip_glimmer=False):
         threads = psutil.cpu_count() * self.THREADS_PER_CORE
@@ -237,7 +287,7 @@ stored in a zip file in Shock.
             self.log('Logging exception from creating report object')
             self.log(str(re))
             # TODO delete shock node
-            raise
+            raise re
         output = {'report_name': repout['name'],
                   'report_ref': repout['ref']
                   }
@@ -253,6 +303,11 @@ stored in a zip file in Shock.
     def run_QUAST(self, ctx, params):
         """
         Run QUAST and return a shock node containing the zipped QUAST output.
+        Supports:
+          - files: list of {'path', 'label'}
+          - assemblies: list<ref> to Assembly/ContigSet
+          - assembly_sets: list<ref> to KBaseSets.AssemblySet
+        Exactly one of (files) or (assemblies/assembly_sets) must be provided.
         :param params: instance of type "QUASTParams" (Input for running
            QUAST. assemblies - the list of assemblies upon which QUAST will
            be run. -OR- files - the list of FASTA files upon which QUAST will
@@ -296,18 +351,34 @@ stored in a zip file in Shock.
         #BEGIN run_QUAST
         self.log('Starting QUAST run. Parameters:')
         self.log(str(params))
-        assemblies = params.get('assemblies')
+
+        assemblies = params.get('assemblies') or []
+        assembly_sets = params.get('assembly_sets') or []
         files = params.get('files')
+
         min_contig_length = self.get_min_contig_length(params)  # fail early if param is bad
-        if not self.xor(assemblies, files):
-            raise ValueError(
-                'One and only one of a list of assembly references or files is required')
+
+        has_obj_inputs = bool(assemblies or assembly_sets)
+        if bool(files) == has_obj_inputs or (not files and not has_obj_inputs):
+            raise ValueError('One and only one of a list of assembly references or files is required')
+
+
         tdir = _os.path.join(self.scratch, str(_uuid.uuid4()))
         self.mkdir_p(tdir)
-        if assemblies:
+
+        if has_obj_inputs:
             if type(assemblies) != list:
                 raise ValueError('assemblies must be a list')
-            info = self.get_assembly_object_info(assemblies, ctx['token'])
+            if type(assembly_sets) != list:
+                raise ValueError('assembly_sets must be a list')
+
+            # Expand sets to assembly refs and combine
+            set_expanded = self.expand_assembly_sets(assembly_sets, ctx['token']) if assembly_sets else []
+            all_ass_refs = list(assemblies) + set_expanded
+            if not all_ass_refs:
+                raise ValueError('Provided assembly_sets expand to zero assemblies')
+
+            info = self.get_assembly_object_info(all_ass_refs, ctx['token'])
             filepaths = self.get_assemblies(tdir, info)
             labels = [i.name for i in info]
         else:
@@ -339,10 +410,9 @@ stored in a zip file in Shock.
                                         'make_handle': 1 if mh else 0,
                                         'pack': 'zip'})
         except _DFUError as dfue:
-            # not really any way to test this block
             self.log('Logging exception loading results to shock')
             self.log(str(dfue))
-            raise
+            raise dfue
         output['quast_path'] = out
         #END run_QUAST
 
@@ -352,6 +422,7 @@ stored in a zip file in Shock.
                              'output is not type dict as required.')
         # return the results
         return [output]
+
     def status(self, ctx):
         #BEGIN_STATUS
         del ctx

@@ -33,6 +33,58 @@ parameters :
         short-hint: | 
           Set the minimum size of contigs to process. Defaults to 500, minimum allowed is 50.
 
+    use_large_genome_mode:
+        ui-name: "Large genome mode (QUAST-LG)"
+        short-hint: "Use --large (better defaults for large eukaryotic genomes)."
+
+    enable_kmer_stats:
+        ui-name: "K-mer statistics"
+        short-hint: "Compute k-mer completeness/correctness (uses bundled tools)."
+
+    kmer_size:
+        ui-name: "K-mer size"
+        short-hint: "Optional; default is 101 when --k-mer-stats is enabled."
+
+    simulate_upper_bound:
+        ui-name: "Upper-bound assembly (UBA)"
+        short-hint: "Simulate theoretical best assembly using provided reads."
+    
+    upper_bound_min_con:
+        ui-name: "UBA: min connections"
+        short-hint: "Optional tuning for --upper-bound-assembly."
+    
+    est_insert_size:
+        ui-name: "UBA: estimated insert size"
+        short-hint: "Optional; leave blank for auto."
+    
+    disable_icarus:
+        ui-name: "Disable Icarus"
+        short-hint: "Skip Icarus interactive plots (HTML)."
+    
+    report_all_metrics:
+        ui-name: "Report all metrics"
+        short-hint: "Keep a stable set of columns in report.tsv."
+    
+    reads_pe_ref:
+        ui-name: "Paired-end reads"
+        short-hint: "Optional; improves read-based metrics and enables UBA."
+    
+    reads_nanopore_ref:
+        ui-name: "Nanopore reads"
+        short-hint: "Optional; for long-read aware metrics/UBA."
+    
+    reads_pacbio_ref:
+        ui-name: "PacBio reads"
+        short-hint: "Optional; for long-read aware metrics/UBA."
+    
+    threads:
+        ui-name: "Threads"
+        short-hint: "Number of CPU threads (-t)."
+
+    assembly_sets:
+        ui-name: Assembly sets
+        short-hint: One or more KBaseSets.AssemblySet objects.
+         
 description : |
     <p>This is the KBase wrapper for version 5.2.0 of the <a href="http://quast.sourceforge.net/" target="_blank">QUAST</a> assembly quality assessment tool. QUAST evaluates assemblies by computing various metrics, including number of contigs, N50/75, L50/75, GC content, number of uncalled bases (N’s), and predicted genes. It takes one or more Assembly objects as input and then generates an output report with statistics for all of the input assemblies.</p>
 

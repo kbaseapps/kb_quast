@@ -1,101 +1,197 @@
 {
-  "ver" : "0.0.2",
-	"authors": [
-		"gaprice"
-	],
-  "contact" : "http://kbase.us/contact-us/",
-  "visible" : true,
-  "categories" : [ "assembly" ],
-  "widgets" : {
-    "input" : "kbaseNarrativeMethodInput",
+  "ver": "0.0.2",
+  "authors": ["gaprice"],
+  "contact": "http://kbase.us/contact-us/",
+  "visible": true,
+  "categories": ["assembly"],
+  "widgets": {
+    "input": "kbaseNarrativeMethodInput",
     "output": "no-display"
   },
-  "parameters" : [ {
-    "id" : "assemblies",
-    "optional" : false,
-    "advanced" : false,
-    "allow_multiple" : true,
-    "default_values" : [ "" ],
-    "field_type" : "text",
-    "text_options" : {
-      "valid_ws_types" : ["KBaseGenomes.ContigSet", "KBaseGenomeAnnotations.Assembly"]
-    }
-  },
-  {
-    "id": "force_glimmer",
-    "optional":true,
-    "advanced":true,
-    "allow_multiple":false,
-    "default_values":["0"],
-    "field_type" : "checkbox",
-    "checkbox_options":{
-        "checked_value": 1,
-        "unchecked_value": 0
-    }
-  },
-  {
-    "id": "min_contig_length",
-    "optional": true,
-    "advanced": true,
-    "allow_multiple": false,
-    "default_values": [500],
-    "field_type": "text",
-    "text_options": {
-        "validate_as": "int",
-        "min_int": 50
-    }
-  }],
-  "behavior" : {
-    "service-mapping": {
-            "url": "",
-            "name": "kb_quast",
-            "method": "run_QUAST_app",
-            "input_mapping": [
-                {
-                    "narrative_system_variable": "workspace",
-                    "target_property": "workspace_name"
-                },
-                {
-                    "input_parameter": "assemblies",
-                    "target_type_transform": "list<ref>",
-                    "target_property": "assemblies"
-                },
-                {
-                    "input_parameter" : "force_glimmer",
-                    "target_property" : "force_glimmer"
-                },
-                {
-                    "input_parameter" : "min_contig_length",
-                    "target_property" : "min_contig_length"
-                }
-            ],
-            "output_mapping": [
-                {
-                    "service_method_output_path": [0,"report_name"],
-                    "target_property": "report_name"
-                },
-                {
-                    "service_method_output_path": [0,"report_ref"],
-                    "target_property": "report_ref"
-                },
-                {
-                    "constant_value": "5",
-                    "target_property": "report_window_line_height"
-                },
-                {
-                    "service_method_output_path": [0],
-                    "target_property": "QUAST_result"
-                },
-                {
-                    "input_parameter": "assemblies",
-                    "target_property": "input_assemblies"
-                },
-                {
-                    "narrative_system_variable": "workspace",
-                    "target_property": "workspace_name"
-                }
-            ]
-        }
+  "parameters": [
+    {
+      "id": "assemblies",
+      "optional": false,
+      "advanced": false,
+      "allow_multiple": true,
+      "default_values": [""],
+      "field_type": "text",
+      "text_options": {
+        "valid_ws_types": ["KBaseGenomes.ContigSet", "KBaseGenomeAnnotations.Assembly"]
+      }
     },
+    {
+      "id": "assembly_sets",
+      "optional": true,
+      "advanced": false,
+      "allow_multiple": true,
+      "default_values": [""],
+      "field_type": "text",
+      "text_options": { "valid_ws_types": ["KBaseSets.AssemblySet"] }
+    },
+    {
+      "id": "force_glimmer",
+      "optional": true,
+      "advanced": true,
+      "allow_multiple": false,
+      "default_values": ["0"],
+      "field_type": "checkbox",
+      "checkbox_options": { "checked_value": "1", "unchecked_value": "0" }
+    },
+    {
+      "id": "min_contig_length",
+      "optional": true,
+      "advanced": true,
+      "allow_multiple": false,
+      "default_values": [500],
+      "field_type": "text",
+      "text_options": { "validate_as": "int", "min_int": 50 }
+    },
+    {
+      "id": "use_large_genome_mode",
+      "optional": true,
+      "advanced": false,
+      "allow_multiple": false,
+      "default_values": ["0"],
+      "field_type": "checkbox",
+      "checkbox_options": { "checked_value": "1", "unchecked_value": "0" }
+    },
+    {
+      "id": "enable_kmer_stats",
+      "optional": true,
+      "advanced": true,
+      "allow_multiple": false,
+      "default_values": ["0"],
+      "field_type": "checkbox",
+      "checkbox_options": { "checked_value": "1", "unchecked_value": "0" }
+    },
+    {
+      "id": "kmer_size",
+      "optional": true,
+      "advanced": true,
+      "allow_multiple": false,
+      "default_values": [""],
+      "field_type": "text",
+      "text_options": { "validate_as": "int" }
+    },
+    {
+      "id": "simulate_upper_bound",
+      "optional": true,
+      "advanced": true,
+      "allow_multiple": false,
+      "default_values": ["0"],
+      "field_type": "checkbox",
+      "checkbox_options": { "checked_value": "1", "unchecked_value": "0" }
+    },
+    {
+      "id": "upper_bound_min_con",
+      "optional": true,
+      "advanced": true,
+      "allow_multiple": false,
+      "default_values": [""],
+      "field_type": "text",
+      "text_options": { "validate_as": "int" }
+    },
+    {
+      "id": "est_insert_size",
+      "optional": true,
+      "advanced": true,
+      "allow_multiple": false,
+      "default_values": [""],
+      "field_type": "text",
+      "text_options": { "validate_as": "int" }
+    },
+    {
+      "id": "disable_icarus",
+      "optional": true,
+      "advanced": true,
+      "allow_multiple": false,
+      "default_values": ["0"],
+      "field_type": "checkbox",
+      "checkbox_options": { "checked_value": "1", "unchecked_value": "0" }
+    },
+    {
+      "id": "report_all_metrics",
+      "optional": true,
+      "advanced": false,
+      "allow_multiple": false,
+      "default_values": ["1"],
+      "field_type": "checkbox",
+      "checkbox_options": { "checked_value": "1", "unchecked_value": "0" }
+    },
+    {
+      "id": "reads_pe_ref",
+      "optional": true,
+      "advanced": true,
+      "allow_multiple": false,
+      "default_values": [""],
+      "field_type": "text",
+      "text_options": {
+        "valid_ws_types": ["KBaseFile.PairedEndLibrary", "KBaseRNASeq.PairedEndLibrary"]
+      }
+    },
+    {
+      "id": "reads_nanopore_ref",
+      "optional": true,
+      "advanced": true,
+      "allow_multiple": false,
+      "default_values": [""],
+      "field_type": "text",
+      "text_options": { "valid_ws_types": ["KBaseFile.SingleEndLibrary"] }
+    },
+    {
+      "id": "reads_pacbio_ref",
+      "optional": true,
+      "advanced": true,
+      "allow_multiple": false,
+      "default_values": [""],
+      "field_type": "text",
+      "text_options": { "valid_ws_types": ["KBaseFile.SingleEndLibrary"] }
+    },
+    {
+      "id": "threads",
+      "optional": true,
+      "advanced": false,
+      "allow_multiple": false,
+      "default_values": ["8"],
+      "field_type": "text",
+      "text_options": { "validate_as": "int" }
+    }
+  ],
+  "behavior": {
+    "service-mapping": {
+      "url": "",
+      "name": "kb_quast",
+      "method": "run_QUAST_app",
+      "input_mapping": [
+        { "narrative_system_variable": "workspace", "target_property": "workspace_name" },
+        { "input_parameter": "assemblies", "target_type_transform": "list<ref>", "target_property": "assemblies" },
+        { "input_parameter": "assembly_sets", "target_type_transform": "list<ref>", "target_property": "assembly_sets" },
+        { "input_parameter": "force_glimmer", "target_property": "force_glimmer" },
+        { "input_parameter": "min_contig_length", "target_property": "min_contig_length" },
+
+        { "input_parameter": "use_large_genome_mode", "target_property": "use_large_genome_mode" },
+        { "input_parameter": "enable_kmer_stats", "target_property": "enable_kmer_stats" },
+        { "input_parameter": "kmer_size", "target_property": "kmer_size" },
+        { "input_parameter": "simulate_upper_bound", "target_property": "simulate_upper_bound" },
+        { "input_parameter": "upper_bound_min_con", "target_property": "upper_bound_min_con" },
+        { "input_parameter": "est_insert_size", "target_property": "est_insert_size" },
+        { "input_parameter": "disable_icarus", "target_property": "disable_icarus" },
+        { "input_parameter": "report_all_metrics", "target_property": "report_all_metrics" },
+        { "input_parameter": "reads_pe_ref", "target_property": "reads_pe_ref" },
+        { "input_parameter": "reads_nanopore_ref", "target_property": "reads_nanopore_ref" },
+        { "input_parameter": "reads_pacbio_ref", "target_property": "reads_pacbio_ref" },
+        { "input_parameter": "threads", "target_property": "threads" }
+      ],
+      "output_mapping": [
+        { "service_method_output_path": [0, "report_name"], "target_property": "report_name" },
+        { "service_method_output_path": [0, "report_ref"], "target_property": "report_ref" },
+        { "constant_value": "5", "target_property": "report_window_line_height" },
+        { "service_method_output_path": [0], "target_property": "QUAST_result" },
+        { "input_parameter": "assemblies", "target_property": "input_assemblies" },
+        { "narrative_system_variable": "workspace", "target_property": "workspace_name" }
+      ]
+    }
+  },
   "job_id_output_field": "docker"
 }
