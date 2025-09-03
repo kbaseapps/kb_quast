@@ -1,3 +1,11 @@
+### 1.2.0
+
+- Updated QUAST to 5.3.0
+- Added support for large genomes
+- Added ONP support
+- added assemblysets input
+- 1.1.0 update
+
 ### 1.1.0
 
 - Updated base image to `kbase/sdkpython:3.8.10` to fix build
