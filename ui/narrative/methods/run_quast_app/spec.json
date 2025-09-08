@@ -157,7 +157,6 @@
       "input_mapping": [
         { "narrative_system_variable": "workspace", "target_property": "workspace_name" },
         { "input_parameter": "assemblies", "target_type_transform": "list<ref>", "target_property": "assemblies" },
-        { "input_parameter": "assembly_sets", "target_type_transform": "list<ref>", "target_property": "assembly_sets" },
         { "input_parameter": "force_glimmer", "target_property": "force_glimmer" },
         { "input_parameter": "min_contig_length", "target_property": "min_contig_length" },
 
