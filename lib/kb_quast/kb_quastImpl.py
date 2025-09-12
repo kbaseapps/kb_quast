@@ -213,8 +213,10 @@ stored in a zip file in Shock.
             self.log(err)
             raise ValueError(err)
 
+
     # ---------- NEW HELPERS (instance methods) ----------
     def _ws_batch_get_info(self, ws_client, refs):
+
         """
         Batched get_object_info3 to avoid repeated roundtrips.
         Returns list of dicts with keys: ref, type
