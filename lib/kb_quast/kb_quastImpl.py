@@ -214,10 +214,10 @@ stored in a zip file in Shock.
             raise ValueError(err)
 
     def _ws_batch_get_info(ws_client, refs):
-    """
-    Batched get_object_info3 to avoid repeated roundtrips.
-    Returns list of dicts with keys: ref, type
-    """
+        """
+        Batched get_object_info3 to avoid repeated roundtrips.
+        Returns list of dicts with keys: ref, type
+        """
         if not refs:
             return []
         # Workspace returns [ (objid, name, type, save_date, version, saved_by, wsid, wsname, chksum, size, meta) ]
