@@ -213,6 +213,95 @@ stored in a zip file in Shock.
             self.log(err)
             raise ValueError(err)
 
+    def _ws_batch_get_info(ws_client, refs):
+    """
+    Batched get_object_info3 to avoid repeated roundtrips.
+    Returns list of dicts with keys: ref, type
+    """
+        if not refs:
+            return []
+        # Workspace returns [ (objid, name, type, save_date, version, saved_by, wsid, wsname, chksum, size, meta) ]
+        info = ws_client.get_object_info3({"objects": [{"ref": r} for r in refs]})["infos"]
+        out = []
+        for r, i in zip(refs, info):
+            out.append({"ref": r, "type": i[2]})  # i[2] is the full type string, e.g. "KBaseSets.AssemblySet-2.0"
+        return out
+
+
+    def _classify_input_refs(ws_client, raw_refs):
+        """
+        Split mixed refs into assemblies vs assembly_sets based on WS type.
+        Returns (assemblies, assembly_sets).
+        """
+        assemblies, assembly_sets = [], []
+
+        for item in _ws_batch_get_info(ws_client, raw_refs):
+            t = item["type"] or ""
+            # Normalize just the module/type part (strip the -X.Y suffix)
+            t_base = t.split("-", 1)[0]
+
+            if t_base in ("KBaseGenomes.Assembly", "KBaseGenomeAnnotations.Assembly"):
+                assemblies.append(item["ref"])
+            elif t_base == "KBaseSets.AssemblySet":
+                assembly_sets.append(item["ref"])
+            else:
+                # You can choose to ignore unknowns or raise; raising is safer.
+                raise ValueError(
+                    f"Unsupported input ref type: {t} for {item['ref']}. "
+                    "Expected KBaseGenomes.Assembly or KBaseSets.AssemblySet."
+                )
+
+        return assemblies, assembly_sets
+
+
+    def _gather_inputs(params, ws_client):
+        """
+        Accepts any combo of:
+        - params['assemblies'] (list of refs)
+        - params['assembly_sets'] (list of refs)
+        - params['input_refs'] (list of refs, mixed)
+        - params['files'] (list of paths/handles)
+        Classifies refs by WS type and returns normalized dict.
+        """
+        # Start with whatever the caller provided
+        assemblies_param = params.get("assemblies") or []
+        assembly_sets_param = params.get("assembly_sets") or []
+        mixed_param = params.get("input_refs") or []
+        files = params.get("files") or []
+
+        # First classify the mixed param
+        cls_assemblies, cls_sets = _classify_input_refs(ws_client, mixed_param)
+
+        # Then also validate/classify anything explicitly put in assemblies/assembly_sets
+        # This protects you if a user mistakenly drops a Set into 'assemblies', etc.
+        exp_assemblies, exp_sets = _classify_input_refs(ws_client, assemblies_param + assembly_sets_param)
+
+        # Merge and de-dup
+        assemblies = list(dict.fromkeys(cls_assemblies + exp_assemblies))
+        assembly_sets = list(dict.fromkeys(cls_sets + exp_sets))
+
+        return {
+            "assemblies": assemblies,
+            "assembly_sets": assembly_sets,
+            "files": files,
+        }
+
+
+    def _expand_assembly_sets_to_members(set_api, assembly_set_refs):
+        """
+        Optional: expand AssemblySet refs into member Assembly refs.
+        Requires SetAPI client.
+        """
+        out = []
+        for ref in assembly_set_refs:
+            data = set_api.get_assembly_set_v1({"ref": ref})["data"]
+            for it in data.get("items", []):
+                if "ref" in it:
+                    out.append(it["ref"])
+        # de-dup while preserving order
+        return list(dict.fromkeys(out))
+
+
     def check_large_input(self, filepaths):
         skip_glimmer = False
         basecount = 0
@@ -352,9 +441,21 @@ stored in a zip file in Shock.
         self.log('Starting QUAST run. Parameters:')
         self.log(str(params))
 
-        assemblies = params.get('assemblies') or []
-        assembly_sets = params.get('assembly_sets') or []
-        files = params.get('files')
+        # Normalize inputs
+        normalized = _gather_inputs(params, self.ws)
+        assemblies = normalized["assemblies"]
+        assembly_sets = normalized["assembly_sets"]
+        files = normalized["files"]
+
+        # If QUAST path expects *expanded* assemblies (recommended), expand sets:
+        if params.get("expand_sets", True):  # default True; flip if your UI wants the opposite
+            set_api = SetAPI(self.callback_url)  # or however you instantiate SetAPI elsewhere
+            expanded = _expand_assembly_sets_to_members(set_api, assembly_sets)
+            # Merge expanded members with any direct assemblies
+            assemblies = list(dict.fromkeys(assemblies + expanded))
+            # You can keep assembly_sets around for reporting, or clear them:
+            # assembly_sets = []
+
 
         min_contig_length = self.get_min_contig_length(params)  # fail early if param is bad
 
