@@ -198,12 +198,8 @@ stored in a zip file in Shock.
         retcode = _subprocess.call(cmd)
         self.log('QUAST return code: ' + str(retcode))
         if retcode:
-            # can't actually figure out how to test this. Give quast garbage it skips the file.
-            # Give quast a file with a missing sequence it acts completely normally.
             raise ValueError('QUAST reported an error, return code was ' + str(retcode))
-        # quast will ignore bad files and keep going, which is a disaster for
-        # reproducibility and accuracy if you're not watching the logs like a hawk.
-        # for now use this hack to check that all files were processed. Maybe there's a better way.
+        # check that all files were processed
         with open(_os.path.join(outdir, 'report.tsv'), 'r') as f:
             files_proc = len(f.readline().split('\t')) - 1
         files_exp = len(filepaths)
@@ -226,7 +222,6 @@ stored in a zip file in Shock.
         info = ws_client.get_object_info3({"objects": [{"ref": r} for r in refs]})["infos"]
         out = []
         for r, i in zip(refs, info):
-            # i[2] is the full type string, e.g. "KBaseSets.AssemblySet-2.0"
             out.append({"ref": r, "type": i[2]})
         return out
 
@@ -250,29 +245,37 @@ stored in a zip file in Shock.
                 )
         return assemblies, assembly_sets
 
-    def _gather_inputs(self, params, ws_client):
+    def _gather_inputs(self, params, _ws_client_unused):
         """
-        Accepts any combo of:
-          - params['assemblies'] (list of refs)
-          - params['assembly_sets'] (list of refs)
-          - params['input_refs'] (list of refs, mixed)
-          - params['files'] (list of paths/handles)
-        Classifies refs by WS type and returns normalized dict.
+        Validate & normalize raw params **without calling WS**.
+        Accepts:
+        - params['assemblies']      (list<ref> or absent)
+        - params['assembly_sets']   (list<ref> or absent)
+        - params['files']           (list<{path,label}> or absent)
+        Returns dict with lists; raises ValueError on bad types.
         """
-        assemblies_param = params.get("assemblies") or []
-        assembly_sets_param = params.get("assembly_sets") or []
-        mixed_param = params.get("input_refs") or []
-        files = params.get("files") or []
+        assemblies = params.get("assemblies", [])
+        assembly_sets = params.get("assembly_sets", [])
+        files = params.get("files", [])
 
-        cls_assemblies, cls_sets = self._classify_input_refs(ws_client, mixed_param)
-        exp_assemblies, exp_sets = self._classify_input_refs(
-            ws_client, assemblies_param + assembly_sets_param
-        )
+        if assemblies is None: assemblies = []
+        if assembly_sets is None: assembly_sets = []
+        if files is None: files = []
 
-        assemblies = list(dict.fromkeys(cls_assemblies + exp_assemblies))
-        assembly_sets = list(dict.fromkeys(cls_sets + exp_sets))
+        if not isinstance(assemblies, list):
+            raise ValueError('assemblies must be a list')
+        if not isinstance(assembly_sets, list):
+            raise ValueError('assembly_sets must be a list')
+        if not isinstance(files, list):
+            raise ValueError('files must be a list')
+
+        # Enforce the “one and only one” rule here so we never hit WS on bad combos
+        has_obj_inputs = bool(assemblies or assembly_sets)
+        if bool(files) == has_obj_inputs:
+            raise ValueError('One and only one of a list of assembly references or files is required')
 
         return {"assemblies": assemblies, "assembly_sets": assembly_sets, "files": files}
+
     # ---------- END HELPERS ----------
 
     def check_large_input(self, filepaths):
@@ -286,6 +289,65 @@ stored in a zip file in Shock.
             skip_glimmer = True
 
         return skip_glimmer
+
+    # --------- NEW: metaquast runner ----------
+    def run_metaquast_exec(self, outdir, filepaths, labels, mparams, ref_paths=None, refs_txt_path=None):
+        """
+        Build and run metaquast.py with supplied inputs.
+        mparams: dict with keys:
+          min_contig_length, min_identity, min_alignment, max_ref_num,
+          unique_mapping ('0'/'1'), reuse_combined_alignments ('0'/'1'),
+          disable_icarus ('0'/'1'), no_krona ('0'/'1'), threads (int)
+        ref_paths: list of reference FASTA paths (optional)
+        refs_txt_path: path to references.txt for --references-list (optional)
+        """
+        threads = int(mparams.get('threads', psutil.cpu_count() * self.THREADS_PER_CORE))
+        cmd = [
+            'metaquast.py',
+            '--threads', str(threads),
+            '-o', outdir,
+            '--min-contig', str(int(mparams.get('min_contig_length', self.DEFAULT_MIN_CONTIG_LENGTH))),
+            '--min-identity', str(float(mparams.get('min_identity', 90))),
+            '--min-alignment', str(int(mparams.get('min_alignment', 65)))
+        ]
+
+        if mparams.get('unique_mapping', '0') == '1':
+            cmd.append('--unique-mapping')
+        if mparams.get('reuse_combined_alignments', '1') == '1':
+            cmd.append('--reuse-combined-alignments')
+        if mparams.get('disable_icarus', '0') == '1':
+            cmd.append('--no-icarus')
+        if mparams.get('no_krona', '0') == '1':
+            cmd.append('--no-krona')
+
+        if labels:
+            cmd += ['-l', ','.join(labels)]
+
+        # references
+        if ref_paths:
+            cmd += ['-r', ','.join(ref_paths)]
+        if refs_txt_path:
+            cmd += ['--references-list', refs_txt_path]
+
+        # (autodetect handled by caller by just omitting refs and adding --max-ref-num)
+        if 'max_ref_num' in mparams and str(mparams.get('max_ref_num', '')).strip() != '':
+            cmd += ['--max-ref-num', str(int(mparams['max_ref_num']))]
+
+        cmd += filepaths
+
+        self.log('running MetaQUAST with command line ' + str(cmd))
+        retcode = _subprocess.call(cmd)
+        self.log('MetaQUAST return code: ' + str(retcode))
+        if retcode:
+            raise ValueError('MetaQUAST reported an error, return code was ' + str(retcode))
+
+        # Light sanity check: ensure a report exists somewhere
+        candidate_paths = [
+            _os.path.join(outdir, 'combined_reference', 'report.tsv'),
+            _os.path.join(outdir, 'report.tsv')
+        ]
+        if not any(_os.path.exists(p) for p in candidate_paths):
+            raise ValueError('MetaQUAST finished but no report.tsv was found in output.')
 
     #END_CLASS_HEADER
 
@@ -484,6 +546,168 @@ stored in a zip file in Shock.
             raise ValueError('Method run_QUAST return value ' +
                              'output is not type dict as required.')
         # return the results
+        return [output]
+
+    # -------- NEW: MetaQUAST (service) --------
+    def run_MetaQUAST(self, ctx, params):
+        """
+        Run MetaQUAST and return a shock node containing the zipped output.
+        Inputs mirror the app form:
+          assemblies: list<ref> (Assembly or AssemblySet allowed via expand)
+          reference_mode: 'none' | 'assemblyset' | 'accession_list' | 'autodetect'
+          reference_set: ref to KBaseSets.AssemblySet (if mode=assemblyset)
+          accession_list: string with one accession per line (if mode=accession_list)
+          min_contig_length, min_identity, min_alignment, max_ref_num
+          unique_mapping ('0'/'1'), reuse_combined_alignments ('0'/'1'),
+          disable_icarus ('0'/'1'), no_krona ('0'/'1'), disable_downloads ('0'/'1')
+          threads
+        """
+        self.log('Starting MetaQUAST run. Parameters:')
+        self.log(str(params))
+
+        ws = _WSClient(self.ws_url, token=ctx['token'])
+
+        # Normalize target assemblies
+        normalized = self._gather_inputs(params, ws)
+        assemblies = normalized["assemblies"]
+        assembly_sets = normalized["assembly_sets"]
+        files = normalized["files"]
+
+        if bool(files) == bool(assemblies or assembly_sets):
+            raise ValueError('One and only one of a list of assembly references or files is required')
+
+        tdir = _os.path.join(self.scratch, str(_uuid.uuid4()))
+        self.mkdir_p(tdir)
+
+        # Download input assemblies to fasta paths + labels
+        if assemblies or assembly_sets:
+            set_expanded = self.expand_assembly_sets(assembly_sets, ctx['token']) if assembly_sets else []
+            all_ass_refs = list(assemblies) + set_expanded
+            if not all_ass_refs:
+                raise ValueError('Provided assembly_sets expand to zero assemblies')
+            info = self.get_assembly_object_info(all_ass_refs, ctx['token'])
+            asm_paths = self.get_assemblies(tdir, info)
+            labels = [i.name for i in info]
+        else:
+            # files path mode (rare for MetaQUAST, but supported)
+            asm_paths = []
+            labels = []
+            for i, lp in enumerate(files):
+                p = lp.get('path'); l = lp.get('label')
+                if not _os.path.isfile(p):
+                    raise ValueError('File entry {}, {}, is not a file'.format(i + 1, p))
+                asm_paths.append(p); labels.append(l if l else _os.path.basename(p))
+
+        # References per mode
+        ref_mode = params.get('reference_mode', 'none')
+        disable_downloads = params.get('disable_downloads', '0') == '1'
+
+        ref_paths = None
+        refs_txt = None
+
+        if ref_mode == 'assemblyset':
+            rset = params.get('reference_set')
+            if not rset:
+                raise ValueError('reference_mode is assemblyset but no reference_set provided')
+            # Expand & download the reference set to local FASTAs
+            ref_refs = self.expand_assembly_sets([rset], ctx['token'])
+            if not ref_refs:
+                raise ValueError('reference_set expands to zero assemblies')
+            rinfo = self.get_assembly_object_info(ref_refs, ctx['token'])
+            ref_paths = self.get_assemblies(tdir, rinfo)
+
+        elif ref_mode == 'accession_list':
+            acc_text = (params.get('accession_list') or '').strip()
+            if not acc_text:
+                raise ValueError('reference_mode is accession_list but accession_list is empty')
+            refs_txt = _os.path.join(tdir, 'references.txt')
+            with open(refs_txt, 'w') as fh:
+                fh.write(acc_text + '\n')
+
+        elif ref_mode == 'autodetect':
+            if disable_downloads:
+                raise ValueError('Autodetect requires downloads; disable_downloads is set.')
+            # No files to prepare; metaquast will BLAST, fetch refs, and honor --max-ref-num
+
+        elif ref_mode == 'none':
+            pass
+        else:
+            raise ValueError('Unknown reference_mode: ' + str(ref_mode))
+
+        # Output dir
+        outdir = _os.path.join(tdir, 'metaquast_results')
+
+        # Build + run
+        self.run_metaquast_exec(
+            outdir=outdir,
+            filepaths=asm_paths,
+            labels=labels,
+            mparams=params,
+            ref_paths=ref_paths,
+            refs_txt_path=refs_txt
+        )
+
+        # Package to Shock
+        dfu = _DFUClient(self.callback_url)
+        try:
+            mh = params.get('make_handle')
+            output = dfu.file_to_shock({
+                'file_path': outdir,
+                'make_handle': 1 if mh else 0,
+                'pack': 'zip'
+            })
+        except _DFUError as dfue:
+            self.log('Logging exception loading MetaQUAST results to shock')
+            self.log(str(dfue))
+            raise dfue
+
+        output['metaquast_path'] = outdir
+        return [output]
+
+    def run_MetaQUAST_app(self, ctx, params):
+        """
+        App wrapper: runs MetaQUAST and saves a KBaseReport with HTML + zip link.
+        Parameter names match the Narrative method spec.
+        """
+        wsname = params.get('workspace_name')
+        if not wsname:
+            raise ValueError('No workspace name provided')
+
+        # Ensure we don't create handles by default from app context
+        params = dict(params)
+        params['make_handle'] = 0
+
+        mret = self.run_MetaQUAST(ctx, params)[0]
+
+        # Prefer combined_reference/report.html if present; otherwise report.html
+        # We upload only the zip via Shock and link to report.html (consistent with run_QUAST_app).
+        kbr = _KBRepClient(self.callback_url)
+        self.log('Saving MetaQUAST report')
+        try:
+            repout = kbr.create_extended_report(
+                {
+                    'message': 'MetaQUAST finished.',
+                    'direct_html_link_index': 0,
+                    'html_links': [{
+                        'shock_id': mret['shock_id'],
+                        'name': 'report.html',
+                        'label': 'MetaQUAST report'
+                    }],
+                    'file_links': [{
+                        'shock_id': mret['shock_id'],
+                        'name': 'metaquast_results.zip',
+                        'label': 'MetaQUAST results (zip)'
+                    }],
+                    'report_object_name': 'kb_metaquast_report_' + str(_uuid.uuid4()),
+                    'workspace_name': wsname
+                }
+            )
+        except _RepError as re:
+            self.log('Logging exception from creating MetaQUAST report object')
+            self.log(str(re))
+            raise re
+
+        output = {'report_name': repout['name'], 'report_ref': repout['ref']}
         return [output]
 
     def status(self, ctx):
