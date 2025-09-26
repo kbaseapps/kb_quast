@@ -1,0 +1,181 @@
+{
+  "ver": "0.0.1",
+  "authors": ["ac.shahnam"],
+  "contact": "http://kbase.us/contact-us/",
+  "visible": true,
+  "categories": ["assembly"],
+  "widgets": { "input": "kbaseNarrativeMethodInput", "output": "no-display" },
+  "parameters": [
+    {
+      "id": "assemblies",
+      "optional": false,
+      "advanced": false,
+      "allow_multiple": true,
+      "default_values": [""],
+      "field_type": "text",
+      "text_options": {
+        "valid_ws_types": [
+          "KBaseGenomeAnnotations.Assembly",
+          "KBaseGenomes.ContigSet",
+          "KBaseSets.AssemblySet"
+        ]
+      }
+    },
+    {
+      "id": "reference_mode",
+      "optional": false,
+      "advanced": false,
+      "allow_multiple": false,
+      "default_values": ["none"],
+      "field_type": "dropdown",
+      "dropdown_options": {
+        "options": [
+          { "display": "None (reference-free)", "value": "none" },
+          { "display": "Reference Set (AssemblySet)", "value": "assemblyset" },
+          { "display": "Accession list (text)", "value": "accession_list" },
+          { "display": "Autodetect (SILVA/NCBI; downloads)", "value": "autodetect" }
+        ]
+      }
+    },
+    {
+      "id": "reference_set",
+      "optional": true,
+      "advanced": false,
+      "allow_multiple": false,
+      "default_values": [""],
+      "field_type": "text",
+      "text_options": { "valid_ws_types": ["KBaseSets.AssemblySet"] }
+    },
+    {
+      "id": "accession_list",
+      "optional": true,
+      "advanced": false,
+      "allow_multiple": false,
+      "default_values": [""],
+      "field_type": "textarea"
+    },
+    {
+      "id": "min_contig_length",
+      "optional": true,
+      "advanced": true,
+      "allow_multiple": false,
+      "default_values": [500],
+      "field_type": "text",
+      "text_options": { "validate_as": "int", "min_int": 50 }
+    },
+    {
+      "id": "min_identity",
+      "optional": true,
+      "advanced": true,
+      "allow_multiple": false,
+      "default_values": [90],
+      "field_type": "text",
+      "text_options": { "validate_as": "float" }
+    },
+    {
+      "id": "min_alignment",
+      "optional": true,
+      "advanced": true,
+      "allow_multiple": false,
+      "default_values": [65],
+      "field_type": "text",
+      "text_options": { "validate_as": "int" }
+    },
+    {
+      "id": "max_ref_num",
+      "optional": true,
+      "advanced": true,
+      "allow_multiple": false,
+      "default_values": [50],
+      "field_type": "text",
+      "text_options": { "validate_as": "int" }
+    },
+    {
+      "id": "unique_mapping",
+      "optional": true,
+      "advanced": true,
+      "allow_multiple": false,
+      "default_values": ["0"],
+      "field_type": "checkbox",
+      "checkbox_options": { "checked_value": "1", "unchecked_value": "0" }
+    },
+    {
+      "id": "reuse_combined_alignments",
+      "optional": true,
+      "advanced": true,
+      "allow_multiple": false,
+      "default_values": ["1"],
+      "field_type": "checkbox",
+      "checkbox_options": { "checked_value": "1", "unchecked_value": "0" }
+    },
+    {
+      "id": "disable_icarus",
+      "optional": true,
+      "advanced": true,
+      "allow_multiple": false,
+      "default_values": ["0"],
+      "field_type": "checkbox",
+      "checkbox_options": { "checked_value": "1", "unchecked_value": "0" }
+    },
+    {
+      "id": "no_krona",
+      "optional": true,
+      "advanced": true,
+      "allow_multiple": false,
+      "default_values": ["0"],
+      "field_type": "checkbox",
+      "checkbox_options": { "checked_value": "1", "unchecked_value": "0" }
+    },
+    {
+      "id": "disable_downloads",
+      "optional": true,
+      "advanced": true,
+      "allow_multiple": false,
+      "default_values": ["0"],
+      "field_type": "checkbox",
+      "checkbox_options": { "checked_value": "1", "unchecked_value": "0" }
+    },
+    {
+      "id": "threads",
+      "optional": true,
+      "advanced": false,
+      "allow_multiple": false,
+      "default_values": ["8"],
+      "field_type": "text",
+      "text_options": { "validate_as": "int" }
+    }
+  ],
+  "behavior": {
+    "service-mapping": {
+      "url": "",
+      "name": "kb_quast",
+      "method": "run_MetaQUAST_app",
+      "input_mapping": [
+        { "narrative_system_variable": "workspace", "target_property": "workspace_name" },
+        { "input_parameter": "assemblies", "target_type_transform": "list<ref>", "target_property": "assemblies" },
+        { "input_parameter": "reference_mode", "target_property": "reference_mode" },
+        { "input_parameter": "reference_set", "target_property": "reference_set" },
+        { "input_parameter": "accession_list", "target_property": "accession_list" },
+        { "input_parameter": "min_contig_length", "target_property": "min_contig_length" },
+        { "input_parameter": "min_identity", "target_property": "min_identity" },
+        { "input_parameter": "min_alignment", "target_property": "min_alignment" },
+        { "input_parameter": "max_ref_num", "target_property": "max_ref_num" },
+        { "input_parameter": "unique_mapping", "target_property": "unique_mapping" },
+        { "input_parameter": "reuse_combined_alignments", "target_property": "reuse_combined_alignments" },
+        { "input_parameter": "disable_icarus", "target_property": "disable_icarus" },
+        { "input_parameter": "no_krona", "target_property": "no_krona" },
+        { "input_parameter": "disable_downloads", "target_property": "disable_downloads" },
+        { "input_parameter": "threads", "target_property": "threads" }
+      ],
+      "output_mapping": [
+        { "service_method_output_path": [0, "report_name"], "target_property": "report_name" },
+        { "service_method_output_path": [0, "report_ref"], "target_property": "report_ref" },
+        { "constant_value": "5", "target_property": "report_window_line_height" },
+        { "service_method_output_path": [0], "target_property": "MetaQUAST_result" },
+        { "input_parameter": "assemblies", "target_property": "input_assemblies" },
+        { "narrative_system_variable": "workspace", "target_property": "workspace_name" }
+      ]
+    }
+  },
+  "job_id_output_field": "docker"
+}

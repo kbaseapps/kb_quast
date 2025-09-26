@@ -1,0 +1,70 @@
+name     : Assess Metagenome Assemblies with MetaQUAST - v5.3.0
+tooltip  : Compare metagenome assemblies against user-supplied references or autodetected refs (SILVA/NCBI).
+screenshots : []
+icon: quast-blue_360.png
+
+parameters:
+  assemblies:
+    ui-name: Assemblies
+    short-hint: One or more Assemblies or AssemblySets to evaluate.
+
+  reference_mode:
+    ui-name: Reference mode
+    short-hint: Choose how to provide references (or use reference-free mode).
+
+  reference_set:
+    ui-name: Reference Set
+    short-hint: KBaseSets.AssemblySet of references.
+
+  accession_list:
+    ui-name: Reference accessions (text)
+    short-hint: One accession per line; passed to --references-list.
+
+  min_contig_length:
+    ui-name: Minimum contig length
+    short-hint: Defaults to 500; minimum 50.
+
+  min_identity:
+    ui-name: Min identity (%)
+    short-hint: Identity threshold for alignments (default 90).
+
+  min_alignment:
+    ui-name: Min alignment (bp)
+    short-hint: Minimum aligned length (default 65).
+
+  max_ref_num:
+    ui-name: Max references (autodetect)
+    short-hint: Used only when autodetecting references.
+
+  unique_mapping:
+    ui-name: Unique mapping
+    short-hint: Use only uniquely mapped alignments to the combined reference.
+
+  reuse_combined_alignments:
+    ui-name: Reuse combined alignments
+    short-hint: Speeds up per-reference steps.
+
+  disable_icarus:
+    ui-name: Disable Icarus
+    short-hint: Skip Icarus interactive plots.
+
+  no_krona:
+    ui-name: Disable Krona
+    short-hint: Skip Krona taxonomy plots.
+
+  disable_downloads:
+    ui-name: Block downloads (no internet)
+    short-hint: Requires references to be supplied (disables autodetect).
+
+  threads:
+    ui-name: Threads
+    short-hint: Number of CPU threads.
+
+description: |
+  <p>MetaQUAST evaluates metagenome assemblies. Supply references as a KBase AssemblySet or accession list, or enable autodetect (downloads SILVA and reference genomes). If your environment blocks external downloads, select “Block downloads” and provide references explicitly.</p>
+
+publications:
+  -
+    display-text: |
+      Mikheenko A, Saveliev V, Gurevich A. MetaQUAST: evaluation of metagenome assemblies. Bioinformatics. 2016.
+    link: https://pubmed.ncbi.nlm.nih.gov/27060122/
