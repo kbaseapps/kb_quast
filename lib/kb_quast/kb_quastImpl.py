@@ -465,7 +465,7 @@ stored in a zip file in Shock.
            remote_md5 - the md5 digest of the file.) -> structure: parameter
            "hid" of String, parameter "file_name" of String, parameter "id"
            of String, parameter "url" of String, parameter "type" of String,
-           parameter "remote_md5" of String, parameter "node_file_name" of
+           "remote_md5" of String, parameter "node_file_name" of
            String, parameter "size" of String, parameter "quast_path" of
            String
         """
@@ -481,6 +481,27 @@ stored in a zip file in Shock.
         assemblies = normalized["assemblies"]
         assembly_sets = normalized["assembly_sets"]
         files = normalized["files"]
+
+        # NEW: reclassify anything in `assemblies` that's actually an AssemblySet
+        if assemblies:
+            infos = self._ws_batch_get_info(ws, assemblies)
+            asm_ok, set_found, bad = [], [], []
+            for it in infos:
+                tbase = (it['type'] or '').split('-', 1)[0]
+                if tbase in ('KBaseGenomes.Assembly', 'KBaseGenomeAnnotations.Assembly'):
+                    asm_ok.append(it['ref'])
+                elif tbase == 'KBaseSets.AssemblySet':
+                    set_found.append(it['ref'])
+                else:
+                    bad.append((it['ref'], it['type']))
+            if bad:
+                raise ValueError(
+                    'Unsupported input ref type(s): ' +
+                    ', '.join([f'{r} ({t})' for r, t in bad]) +
+                    '. Expected Assembly or AssemblySet.'
+                )
+            assemblies = asm_ok
+            assembly_sets = list(dict.fromkeys(list(assembly_sets) + set_found))
 
         min_contig_length = self.get_min_contig_length(params)  # fail early if param is bad
 
@@ -572,6 +593,27 @@ stored in a zip file in Shock.
         assemblies = normalized["assemblies"]
         assembly_sets = normalized["assembly_sets"]
         files = normalized["files"]
+
+        # NEW: reclassify anything in `assemblies` that's actually an AssemblySet
+        if assemblies:
+            infos = self._ws_batch_get_info(ws, assemblies)
+            asm_ok, set_found, bad = [], [], []
+            for it in infos:
+                tbase = (it['type'] or '').split('-', 1)[0]
+                if tbase in ('KBaseGenomes.Assembly', 'KBaseGenomeAnnotations.Assembly'):
+                    asm_ok.append(it['ref'])
+                elif tbase == 'KBaseSets.AssemblySet':
+                    set_found.append(it['ref'])
+                else:
+                    bad.append((it['ref'], it['type']))
+            if bad:
+                raise ValueError(
+                    'Unsupported input ref type(s): ' +
+                    ', '.join([f'{r} ({t})' for r, t in bad]) +
+                    '. Expected Assembly or AssemblySet.'
+                )
+            assemblies = asm_ok
+            assembly_sets = list(dict.fromkeys(list(assembly_sets) + set_found))
 
         if bool(files) == bool(assemblies or assembly_sets):
             raise ValueError('One and only one of a list of assembly references or files is required')
@@ -707,7 +749,10 @@ stored in a zip file in Shock.
             self.log(str(re))
             raise re
 
+        # --- 2nd option: define `output` then keep the guard/return ---
         output = {'report_name': repout['name'], 'report_ref': repout['ref']}
+        if not isinstance(output, dict):
+            raise ValueError('Method run_MetaQUAST_app return value output is not type dict as required.')
         return [output]
 
     def status(self, ctx):
