@@ -719,24 +719,56 @@ stored in a zip file in Shock.
         params = dict(params)
         params['make_handle'] = 0
 
-        mret = self.run_MetaQUAST(ctx, params)[0]
+    def run_MetaQUAST_app(self, ctx, params):
+        """
+        App wrapper: runs MetaQUAST and saves a KBaseReport with HTML + zip link.
+        Parameter names match the Narrative method spec.
+        Returns: [ { report_name, report_ref } ]
+        """
+        wsname = params.get('workspace_name')
+        if not wsname:
+            raise ValueError('No workspace name provided')
 
-        # Prefer combined_reference/report.html if present; otherwise report.html
-        # We upload only the zip via Shock and link to report.html (consistent with run_QUAST_app).
+        # Ensure we don't create handles by default from app context
+        params = dict(params)
+        params['make_handle'] = 0
+
+        # Expect run_MetaQUAST to return a 1-element list with a dict
+        mlist = self.run_MetaQUAST(ctx, params)
+        if (not isinstance(mlist, list)) or (len(mlist) == 0) or (not isinstance(mlist[0], dict)):
+            raise ValueError('run_MetaQUAST did not return [dict] as expected')
+
+        mret = mlist[0]
+
+        # mret must include a Shock node for the zipped results
+        shock_id = mret.get('shock_id')
+        if not shock_id or not isinstance(shock_id, str):
+            raise ValueError('run_MetaQUAST did not provide a valid "shock_id" for results')
+
+        # Prefer combined_reference/report.html if your packing code includes it,
+        # else fall back to report.html. You can have run_MetaQUAST set one of
+        # these keys; otherwise this defaults to "report.html".
+        html_name = (
+            mret.get('preferred_html')
+            or mret.get('report_html')
+            or 'report.html'
+        )
+
         kbr = _KBRepClient(self.callback_url)
         self.log('Saving MetaQUAST report')
+
         try:
             repout = kbr.create_extended_report(
                 {
                     'message': 'MetaQUAST finished.',
                     'direct_html_link_index': 0,
                     'html_links': [{
-                        'shock_id': mret['shock_id'],
-                        'name': 'report.html',
+                        'shock_id': shock_id,
+                        'name': html_name,          # e.g., 'combined_reference/report.html' or 'report.html'
                         'label': 'MetaQUAST report'
                     }],
                     'file_links': [{
-                        'shock_id': mret['shock_id'],
+                        'shock_id': shock_id,
                         'name': 'metaquast_results.zip',
                         'label': 'MetaQUAST results (zip)'
                     }],
@@ -745,15 +777,14 @@ stored in a zip file in Shock.
                 }
             )
         except _RepError as re:
-            self.log('Logging exception from creating MetaQUAST report object')
+            self.log('Exception while creating MetaQUAST report object')
             self.log(str(re))
-            raise re
+            raise
 
-        # --- 2nd option: define `output` then keep the guard/return ---
+        # KBase methods return a single-element list containing a dict
         output = {'report_name': repout['name'], 'report_ref': repout['ref']}
-        if not isinstance(output, dict):
-            raise ValueError('Method run_MetaQUAST_app return value output is not type dict as required.')
         return [output]
+
 
     def status(self, ctx):
         #BEGIN_STATUS
